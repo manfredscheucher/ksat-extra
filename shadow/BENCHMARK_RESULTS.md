@@ -9,12 +9,14 @@ wall time (parse+solve+exit; parse/IO negligible vs solve here). Date: 2026-09.
 
 ## MiniSat: C vs Kotlin/JVM vs Kotlin/Native (macOS arm64, release -opt)
 
-| instance   | C       | Kotlin/JVM | Kotlin/Native | JVM/C  | Native/C |
-|------------|---------|------------|---------------|--------|----------|
-| php_7_6    | 0.008 s | (sub-ms)   | —             | —      | —        |
-| php_8_7    | 0.028 s | —          | —             | —      | —        |
-| php_9_8    | 0.180 s | 0.239 s    | 0.650 s       | 1.33×  | 3.61×    |
-| php_10_9   | 2.606 s | 3.526 s    | 9.641 s       | 1.35×  | 3.70×    |
+Times are seconds (lower is better); slowdown = Kotlin time ÷ C time.
+
+| instance   | C (s)   | Kotlin/JVM (s) | Kotlin/Native (s) | JVM ÷ C | Native ÷ C |
+|------------|---------|----------------|-------------------|---------|------------|
+| php_7_6    | 0.008   | (sub-ms)       | —                 | —       | —          |
+| php_8_7    | 0.028   | —              | —                 | —       | —          |
+| php_9_8    | 0.180   | 0.239          | 0.650             | 1.33×   | 3.61×      |
+| php_10_9   | 2.606   | 3.526          | 9.641             | 1.35×   | 3.70×      |
 
 **Kotlin/JVM ≈ 1.3× C** (competitive). **Kotlin/Native ≈ 3.7× C — and slower than the JVM**
 (≈2.7× the JVM time). This is the known JIT-beats-AOT-on-hot-loops effect for an

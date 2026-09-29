@@ -1,5 +1,9 @@
 /*********************************************************************[microsat.c]***
 
+  Provenance: verbatim copy of microSAT (microsat.c) by Marijn Heule.
+  Upstream: https://github.com/marijnheule/microsat  (no upstream commit pinned;
+  matches the 2014-2018 MIT release below). Kept as a read-only reference.
+
   The MIT License
 
   Copyright (c) 2014-2018 Marijn Heule
