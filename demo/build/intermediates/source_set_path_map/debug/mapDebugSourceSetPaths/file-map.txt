@@ -1,0 +1,15 @@
+org.bytefred.ksat.demo-debug-0 /Users/manfred/github/sat-solvers-kotlin/ksat-common/build/intermediates/packaged_res/debug/packageDebugResources
+org.bytefred.ksat.demo-pngs-1 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/build/generated/res/pngs/debug
+org.bytefred.ksat.demo-resValues-2 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/build/generated/res/resValues/debug
+org.bytefred.ksat.demo-updated_navigation_xml-3 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/build/generated/updated_navigation_xml/debug
+org.bytefred.ksat.demo-packageDebugResources-4 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+org.bytefred.ksat.demo-packageDebugResources-5 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+org.bytefred.ksat.demo-debug-6 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/build/intermediates/merged_res/debug/mergeDebugResources
+org.bytefred.ksat.demo-androidDebug-7 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/src/androidDebug/res
+org.bytefred.ksat.demo-androidMain-8 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/src/androidMain/res
+org.bytefred.ksat.demo-debug-9 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/src/debug/res
+org.bytefred.ksat.demo-main-10 /Users/manfred/github/sat-solvers-kotlin/ksat-extra/demo/src/main/res
+org.bytefred.ksat.demo-debug-11 /Users/manfred/github/sat-solvers-kotlin/ksat/build/intermediates/packaged_res/debug/packageDebugResources
+org.bytefred.ksat.demo-debug-12 /Users/manfred/github/sat-solvers-kotlin/solver/cadical/build/intermediates/packaged_res/debug/packageDebugResources
+org.bytefred.ksat.demo-debug-13 /Users/manfred/github/sat-solvers-kotlin/solver/kissat/build/intermediates/packaged_res/debug/packageDebugResources
+org.bytefred.ksat.demo-debug-14 /Users/manfred/github/sat-solvers-kotlin/solver/minisat/build/intermediates/packaged_res/debug/packageDebugResources

@@ -1,13 +1,21 @@
 # ksat-extra
 
-Development and verification material for
-[sat-solvers-kotlin](https://github.com/manfredscheucher/sat-solvers-kotlin): the shadow
-harness (C references + instrumented traces), the test/benchmark CNFs, and the runtime
-benchmark data. Kept out of the main repo so that repo stays a clean Kotlin product; this
-is pulled in there as an **optional** submodule at `ksat-extra/` (a default
-`git clone --recursive` skips it).
+Everything for [sat-solvers-kotlin](https://github.com/manfredscheucher/sat-solvers-kotlin)
+that is not the core product: the multiplatform examples, the docs, and the shadow/benchmark
+harness. Kept out of the main repo so that repo stays a clean Kotlin product; this is pulled
+in there as an **optional** submodule at `ksat-extra/` (a default `git clone --recursive`
+skips it — `git submodule update --init ksat-extra` pulls it).
 
-## What's here (`shadow/`)
+## Contents
+
+- **`demo/`** — a small SAT demo (enumerate all models of an XOR, then UNSAT) compiled to
+  every Kotlin Multiplatform target (JVM, Android, JS, Wasm, Linux, Windows, iOS). See
+  [`demo/README.md`](demo/README.md).
+- **`doc/`** — the shadowing methodology, per-solver status, and the runtime benchmarks
+  (`.typ` sources + built `.pdf`).
+- **`shadow/`** — the verification harness (below).
+
+## What's in `shadow/`
 
 - `microsat-c/`, `minisat-c/`, `cadical-c/`, `kissat-c/` — the C/C++ references. `*_orig`
   are verbatim upstream copies (microSAT, MiniSat); `*_trace` are self-contained,

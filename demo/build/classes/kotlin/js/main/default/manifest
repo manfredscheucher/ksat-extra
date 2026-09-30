@@ -1,0 +1,12 @@
+abi_version=2.2.0
+builtins_platform=JS
+compiler_version=2.2.20
+depends=kotlin ksat-extra\:ksat ksat-extra\:ksat-common org.jetbrains.kotlin\:kotlin-dom-api-compat
+ir_signature_versions=1,2
+jsOutputName=ksat-extra-demo
+language_features=+AllowAnyAsAnActualTypeForExpectInterface +JsAllowValueClassesInExternals +MultiPlatformProjects
+metadata_version=1.4.1
+serializedIrFileFingerprints=lqcfybca9zpl.16s7wy8or248t veoxmj5lwpzr.2ejzkccml31d1 2styt69slu70t.1s0944n0x5g5
+serializedKlibFingerprint=1mdn35jz4or3b.22948nzn8nxdg
+unique_name=ksat-extra\:demo
+wasm_targets=wasm-js
