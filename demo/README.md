@@ -37,9 +37,10 @@ cd ksat-extra
 ./gradlew :demo:wasmJsBrowserDevelopmentRun     # WebAssembly in the browser
 ./gradlew :demo:runDebugExecutableLinuxX64      # Linux native console
 ./gradlew :demo:runReleaseExecutableMingwX64    # Windows native console (on Windows)
+./gradlew :demo:runDebugExecutableMacosArm64    # macOS native console (Apple Silicon)
+./gradlew :demo:runDebugExecutableMacosX64      # macOS native console (Intel)
 ./gradlew :demo:installDebug                     # Android app "ksat demo"
 ```
 
 iOS builds as a framework (`:demo:linkDebugFrameworkIosSimulatorArm64`); call
-`iosDemoReport()` from Swift, e.g. `Text(DemoKt.iosDemoReport())` in SwiftUI. macOS: run the
-JVM console (macOS desktop-native is not a `ksat` target).
+`iosDemoReport()` from Swift, e.g. `Text(DemoKt.iosDemoReport())` in SwiftUI.

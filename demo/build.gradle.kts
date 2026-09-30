@@ -20,10 +20,11 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs { browser(); binaries.executable() }
 
-    // Native console executables. (Targets match what :ksat provides: Linux and Windows.
-    // macOS desktop-native is not a :ksat target; run macOS via the JVM console instead.)
+    // Native console executables. Targets match what :ksat provides.
     linuxX64 { binaries { executable { entryPoint = "org.bytefred.ksat.demo.main" } } }
     mingwX64 { binaries { executable { entryPoint = "org.bytefred.ksat.demo.main" } } }
+    macosArm64 { binaries { executable { entryPoint = "org.bytefred.ksat.demo.main" } } }
+    macosX64 { binaries { executable { entryPoint = "org.bytefred.ksat.demo.main" } } }
 
     // iOS: framework — call iosDemoReport() from Swift (e.g. Text(DemoKt.iosDemoReport())).
     iosArm64 { binaries { framework { baseName = "Demo" } } }
