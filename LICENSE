@@ -1,0 +1,42 @@
+MIT License
+
+Copyright (c) 2026 Manfred Scheucher
+
+This repository holds the shadow/verification and benchmark material for
+sat-solvers-kotlin: the instrumented C/C++ trace references, the test CNFs, the
+benchmark data, and the scripts. The scripts and the instrumented trace files
+(*_trace.*) are released under the MIT License below.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+================================================================================
+Third-party attribution
+================================================================================
+
+The C/C++ references under shadow/ are derived from four MIT-licensed solvers.
+The verbatim originals (microsat_orig.c, minisat_orig.cc) and the instrumented
+trace references transcribed from the CDCL cores of CaDiCaL and kissat all keep
+their upstream copyright. Every original is MIT licensed; the full upstream
+license texts are in licenses/.
+
+  MicroSAT — Copyright (c) Marijn Heule                       (licenses/microsat-LICENSE.txt)
+  MiniSat  — Copyright (c) Niklas Eén, Niklas Sörensson        (licenses/minisat-LICENSE.txt)
+  CaDiCaL  — Copyright (c) Armin Biere and contributors        (licenses/cadical-LICENSE.txt)
+  kissat   — Copyright (c) Armin Biere and contributors        (licenses/kissat-LICENSE.txt)
