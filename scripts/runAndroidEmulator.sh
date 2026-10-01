@@ -11,14 +11,16 @@ ADB="${ANDROID_HOME:-$HOME/Library/Android/sdk}/platform-tools/adb"
 [ -n "$ADB" ] || { echo "adb not found; set ANDROID_HOME" >&2; exit 1; }
 
 # Emulators = adb serials in 'device' state matching emulator-XXXX.
-mapfile -t EMUS < <("$ADB" devices | awk '$2=="device" && $1 ~ /^emulator-/ {print $1}')
+# (newline-separated list; avoid bash-4 'mapfile' so this runs on macOS's bash 3.2)
+EMUS="$("$ADB" devices | awk '$2=="device" && $1 ~ /^emulator-/ {print $1}')"
+COUNT="$(printf '%s\n' "$EMUS" | grep -c .)"
 
 SERIAL="${1:-}"
 if [ -z "$SERIAL" ]; then
-    case "${#EMUS[@]}" in
+    case "$COUNT" in
         0) echo "No running emulator. Start one first (Android Studio or 'emulator -avd <name>')." >&2; exit 1 ;;
-        1) SERIAL="${EMUS[0]}" ;;
-        *) echo "Multiple emulators: ${EMUS[*]}" >&2
+        1) SERIAL="$EMUS" ;;
+        *) echo "Multiple emulators:" >&2; echo "$EMUS" >&2
            echo "Pass one: ./scripts/runAndroidEmulator.sh <serial>" >&2; exit 1 ;;
     esac
 fi
