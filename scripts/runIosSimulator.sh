@@ -47,5 +47,12 @@ open -a Simulator || true
 echo "Installing..."
 xcrun simctl install "$SIM_UDID" "$APP_PATH"
 echo "Launching $APP_ID..."
-xcrun simctl launch "$SIM_UDID" "$APP_ID" || { sleep 3; xcrun simctl launch "$SIM_UDID" "$APP_ID"; }
+LAUNCH_OUT="$(xcrun simctl launch "$SIM_UDID" "$APP_ID" 2>&1)" || {
+    sleep 3
+    LAUNCH_OUT="$(xcrun simctl launch "$SIM_UDID" "$APP_ID" 2>&1)" || {
+        echo "Error: failed to launch $APP_ID on $SIM_UDID." >&2
+        echo "$LAUNCH_OUT" >&2
+        exit 1
+    }
+}
 echo "Launched 'ksat demo' on the simulator."
