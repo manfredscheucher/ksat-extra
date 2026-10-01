@@ -4,7 +4,7 @@ Everything for [sat-solvers-kotlin](https://github.com/manfredscheucher/sat-solv
 that is not the core product: the multiplatform examples, the docs, and the shadow/benchmark
 harness. Kept out of the main repo so that repo stays a clean Kotlin product; this is pulled
 in there as an **optional** submodule at `ksat-extra/` (a default `git clone --recursive`
-skips it — `git submodule update --init ksat-extra` pulls it).
+skips it — `git submodule update --init --checkout ksat-extra` pulls it).
 
 ## Contents
 
@@ -40,7 +40,7 @@ absent, those tests skip and the main build stays green.
 To use it from the main repo:
 
 ```bash
-git submodule update --init ksat-extra    # opt-in; --recursive does NOT pull it
+git submodule update --init --checkout ksat-extra    # opt-in; --recursive does NOT pull it
 bash ksat-extra/shadow/tools/regen_golden_minisat.sh   # regenerate goldens (per solver)
 ```
 

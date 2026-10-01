@@ -25,7 +25,7 @@ The demo consumes the solver from the main repo via relative paths, so it only b
 
 ```bash
 # from the main repo
-git submodule update --init ksat-extra
+git submodule update --init --checkout ksat-extra
 cd ksat-extra
 ```
 

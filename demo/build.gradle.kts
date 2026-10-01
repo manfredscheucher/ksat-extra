@@ -26,10 +26,12 @@ kotlin {
     macosArm64 { binaries { executable { entryPoint = "org.bytefred.ksat.demo.main" } } }
     macosX64 { binaries { executable { entryPoint = "org.bytefred.ksat.demo.main" } } }
 
-    // iOS: framework — call iosDemoReport() from Swift (e.g. Text(DemoKt.iosDemoReport())).
-    iosArm64 { binaries { framework { baseName = "Demo" } } }
-    iosSimulatorArm64 { binaries { framework { baseName = "Demo" } } }
-    iosX64 { binaries { framework { baseName = "Demo" } } }
+    // iOS: static framework — call iosDemoReport() from Swift (Text(DemoKt.iosDemoReport())).
+    // isStatic + the embedAndSignAppleFrameworkForXcode task is what the iosApp/ Xcode project
+    // uses to pull this in (see scripts/runIosSimulator.sh).
+    iosArm64 { binaries { framework { baseName = "Demo"; isStatic = true } } }
+    iosSimulatorArm64 { binaries { framework { baseName = "Demo"; isStatic = true } } }
+    iosX64 { binaries { framework { baseName = "Demo"; isStatic = true } } }
 
     sourceSets {
         val commonMain by getting {

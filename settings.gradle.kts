@@ -33,7 +33,7 @@ dependencyResolutionManagement {
 val main = file("..")
 require(file("$main/ksat/build.gradle.kts").exists()) {
     "ksat solver not found at ${main.absolutePath}. The demo needs ksat-extra to be checked " +
-        "out inside the sat-solvers-kotlin main repo (git submodule update --init ksat-extra)."
+        "out inside the sat-solvers-kotlin main repo (git submodule update --init --checkout ksat-extra)."
 }
 
 include(":ksat-common")

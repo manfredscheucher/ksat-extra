@@ -99,7 +99,7 @@ penalty *without* C's zero-overhead memory model.
 = Reproduce
 
 The CNFs and the C reference live in the optional `ksat-extra` submodule
-(`git submodule update --init ksat-extra`):
+(`git submodule update --init --checkout ksat-extra`):
 
 ```
 # C reference
