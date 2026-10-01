@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Run the ksat demo in the browser (Kotlin/JS). Opens a dev server and shows the
-# model enumeration on the page. For the WebAssembly build use :demo:wasmJsBrowserDevelopmentRun.
+# Run the ksat demo in the browser (Kotlin/JS). Starts a blocking dev server and opens a
+# browser showing the model enumeration. Works on any host with a JDK.
 set -e
 cd "$(dirname "$0")/.."
+echo "Starting Kotlin/JS dev server (blocking). It opens a browser; press Ctrl-C to stop." >&2
+echo "For the WebAssembly build: ./gradlew :demo:wasmJsBrowserDevelopmentRun" >&2
 exec ./gradlew :demo:jsBrowserDevelopmentRun "$@"

@@ -27,11 +27,13 @@ object XorDemo {
     )
 
     /**
-     * The full demo report as one string — the entry point every target calls. Shows the CNF
-     * once, then one block per solver (all four), blocks separated by a blank line.
+     * The full demo report as one string — the entry point every target calls. [target] names
+     * the platform (e.g. "JVM", "Kotlin/JS") for a uniform header "ksat demo (<target>)". Shows
+     * the header, then the CNF once, then one block per solver (all four), blocks blank-separated.
      */
-    fun report(): String {
+    fun report(target: String): String {
         val out = ArrayList<String>()
+        out += "ksat demo ($target)"
         out += "CNF:  (x1 OR x2) AND (NOT x1 OR NOT x2)      // XOR(x1, x2)"
         for (solver in Solver.entries) {
             out += "" // blank line between the CNF / previous block and this one

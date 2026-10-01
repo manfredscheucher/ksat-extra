@@ -26,6 +26,8 @@ if [ -z "$SERIAL" ]; then
 fi
 
 echo "Emulator: $SERIAL"
-./gradlew :demo:installDebug
+# Pin install to the chosen serial (adb/Gradle honor ANDROID_SERIAL) so install and launch
+# target the same device.
+ANDROID_SERIAL="$SERIAL" ./gradlew :demo:installDebug
 "$ADB" -s "$SERIAL" shell am start -n org.bytefred.ksat.demo/.MainActivity
 echo "Launched 'ksat demo' on $SERIAL."
