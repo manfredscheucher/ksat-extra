@@ -16,8 +16,28 @@ git submodule update --init --checkout ksat-extra
 
 The `demo/` enumerates all models of XOR(x1,x2) with every ported solver, then UNSAT — the
 same Kotlin running on JVM, in the browser, on Android and on iOS:
-
-<img src="misc/screenshot-jvm.png" alt="demo on JVM" width="22%"/> <img src="misc/screenshot-web.png" alt="demo in the browser" width="22%"/> <img src="misc/screenshot-android.png" alt="demo on Android" width="22%"/> <img src="misc/screenshot-ios.png" alt="demo on iOS" width="22%"/>
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <b>JVM</b>
+      <p><img src="misc/screenshot-jvm.png" alt="demo on JVM" width="100%" /></p>
+    </td>
+    <td align="center" width="50%">
+      <b>JS/Browser</b>
+      <p><img src="misc/screenshot-web.png" alt="demo in the browser" width="100%" /></p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <b>Android</b>
+      <p><img src="misc/screenshot-android.png" alt="demo on Android" width="60%" /></p>
+    </td>
+    <td align="center" width="50%">
+      <b>iOS</b>
+      <p><img src="misc/screenshot-ios.png" alt="demo on iOS" width="60%" /></p>
+    </td>
+  </tr>
+</table>
 
 ## Contents
 
