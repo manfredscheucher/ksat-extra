@@ -38,6 +38,8 @@ require(file("$main/ksat/build.gradle.kts").exists()) {
 
 include(":ksat-common")
 project(":ksat-common").projectDir = file("../ksat-common")
+include(":microsat")
+project(":microsat").projectDir = file("../solver/microsat")
 include(":minisat")
 project(":minisat").projectDir = file("../solver/minisat")
 include(":cadical")

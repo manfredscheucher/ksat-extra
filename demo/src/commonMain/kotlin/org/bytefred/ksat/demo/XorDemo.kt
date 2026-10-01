@@ -36,7 +36,8 @@ object XorDemo {
         out += "start solver: ksat / $solver"
         out += ""
 
-        val models = enumerateModels(solver, numVars = N_VARS, cnf = cnf)
+        // enumerateModels is lazy; this small CNF has few models, so collect them all.
+        val models = enumerateModels(solver, numVars = N_VARS, cnf = cnf).toList()
         models.forEachIndexed { i, model -> out += "solution ${i + 1}: ${format(model)}" }
         out += if (models.isEmpty()) "UNSAT: no solutions." else "no other solutions (UNSAT)."
         return out
