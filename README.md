@@ -1,10 +1,18 @@
 # ksat-extra
 
-Everything for [sat-solvers-kotlin](https://github.com/manfredscheucher/sat-solvers-kotlin)
-that is not the core product: the multiplatform examples, the docs, and the shadow/benchmark
-harness. Kept out of the main repo so that repo stays a clean Kotlin product; this is pulled
-in there as an **optional** submodule at `ksat-extra/` (a default `git clone --recursive`
-skips it — `git submodule update --init --checkout ksat-extra` pulls it).
+Extra material for [sat-solvers-kotlin](https://github.com/manfredscheucher/sat-solvers-kotlin):
+the multiplatform demo, the docs, and the shadow/benchmark harness. It sits in its own repo so
+the main one stays small, and is an optional submodule there, so it is NOT pulled by default.
+
+To get it, check out the main repo and then add this submodule:
+
+```bash
+git clone --recursive https://github.com/manfredscheucher/sat-solvers-kotlin.git
+cd sat-solvers-kotlin
+git submodule update --init --checkout ksat-extra
+```
+
+(Two steps on purpose: `--recursive` alone skips the optional `ksat-extra`.)
 
 The `demo/` enumerates all models of XOR(x1,x2) with every ported solver, then UNSAT — the
 same Kotlin running on JVM, in the browser, on Android and on iOS:
