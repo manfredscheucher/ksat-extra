@@ -12,4 +12,5 @@ case "$(uname -s)" in
        exit 1 ;;
 esac
 
+[ -x ./gradlew ] || { echo "Error: ./gradlew not found — run from inside the ksat-extra checkout." >&2; exit 1; }
 exec ./gradlew :demo:runDebugExecutableLinuxX64 -q "$@"

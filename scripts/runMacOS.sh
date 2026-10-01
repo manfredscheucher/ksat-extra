@@ -17,4 +17,5 @@ case "$(uname -m)" in
     *) echo "Unknown Mac arch: $(uname -m)" >&2; exit 1 ;;
 esac
 
+[ -x ./gradlew ] || { echo "Error: ./gradlew not found — run from inside the ksat-extra checkout." >&2; exit 1; }
 exec ./gradlew ":demo:runDebugExecutable${TARGET}" -q "$@"
