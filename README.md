@@ -7,9 +7,9 @@ in there as an **optional** submodule at `ksat-extra/` (a default `git clone --r
 skips it — `git submodule update --init --checkout ksat-extra` pulls it).
 
 The `demo/` enumerates all models of XOR(x1,x2) with every ported solver, then UNSAT — the
-same Kotlin running on JVM, in the browser, and on iOS:
+same Kotlin running on JVM, in the browser, on Android and on iOS:
 
-<img src="misc/screenshot-jvm.png" alt="demo on JVM" width="40%"/> <img src="misc/screenshot-web.png" alt="demo in the browser" width="34%"/> <img src="misc/screenshot-ios.png" alt="demo on iOS" width="22%"/>
+<img src="misc/screenshot-jvm.png" alt="demo on JVM" width="33%"/> <img src="misc/screenshot-web.png" alt="demo in the browser" width="28%"/> <img src="misc/screenshot-android.png" alt="demo on Android" width="17%"/> <img src="misc/screenshot-ios.png" alt="demo on iOS" width="17%"/>
 
 ## Contents
 
