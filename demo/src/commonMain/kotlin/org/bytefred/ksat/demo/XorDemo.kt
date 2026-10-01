@@ -26,16 +26,24 @@ object XorDemo {
         intArrayOf(-1, -2), // NOT x1 OR NOT x2
     )
 
-    /** The full demo report as one string — the entry point every target calls. */
-    fun report(solver: Solver = Solver.MINISAT): String = run(solver).joinToString("\n")
-
-    /** Run the demo with the given solver and return the report as lines of text. */
-    fun run(solver: Solver = Solver.MINISAT): List<String> {
+    /**
+     * The full demo report as one string — the entry point every target calls. Shows the CNF
+     * once, then one block per solver (all four), blocks separated by a blank line.
+     */
+    fun report(): String {
         val out = ArrayList<String>()
         out += "CNF:  (x1 OR x2) AND (NOT x1 OR NOT x2)      // XOR(x1, x2)"
-        out += "start solver: ksat / $solver"
-        out += ""
+        for (solver in Solver.entries) {
+            out += "" // blank line between the CNF / previous block and this one
+            out += run(solver)
+        }
+        return out.joinToString("\n")
+    }
 
+    /** One solver's block: "start solver ...", the solutions, then the UNSAT line. */
+    fun run(solver: Solver): List<String> {
+        val out = ArrayList<String>()
+        out += "start solver: ksat / $solver"
         // enumerateModels is lazy; this small CNF has few models, so collect them all.
         val models = enumerateModels(solver, numVars = N_VARS, cnf = cnf).toList()
         models.forEachIndexed { i, model -> out += "solution ${i + 1}: ${format(model)}" }
