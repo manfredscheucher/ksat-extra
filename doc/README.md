@@ -1,5 +1,11 @@
 # doc/ — sat-solvers-kotlin
 
+**What "shadowing" means here:** to check a Kotlin port really behaves like its C original (not
+just that it answers SAT/UNSAT), an instrumented build of BOTH prints a trace — every decision,
+propagation and conflict, step by step — and the two traces are diffed. The saved reference
+trace from the C solver is the **golden trace**; the port passes when its trace matches the
+golden one line for line.
+
 The docs are written in Typst (`*.typ`, compiled to `*.pdf`).
 
 - **shadowing-methodology** — how each port is checked against its C original: the
