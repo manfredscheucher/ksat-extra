@@ -2,13 +2,19 @@
 
 Extra material for [sat-solvers-kotlin](https://github.com/manfredscheucher/sat-solvers-kotlin):
 a multiplatform demo, runtime benchmarks, docs, and the shadowing harness. Its own repo so the
-main one stays small; an optional submodule there, NOT pulled by default. Get it with:
+main one stays small; an optional submodule there, NOT pulled by default.
+
+Clone the main repo recursively, then add this submodule (`--recursive` alone skips it, since
+it's optional):
 
 ```bash
 git clone --recursive https://github.com/manfredscheucher/sat-solvers-kotlin.git
 cd sat-solvers-kotlin
-git submodule update --init --checkout ksat-extra    # --recursive alone skips it
+git submodule update --init --checkout ksat-extra
 ```
+
+Everything builds from inside `ksat-extra/` (it consumes the solvers from the main repo via
+relative paths). Run the demo with a script from `scripts/`, e.g. `./scripts/runJVM.sh`.
 
 ## Demo
 
