@@ -54,7 +54,16 @@ To use it from the main repo:
 
 ```bash
 git submodule update --init --checkout ksat-extra    # opt-in; --recursive does NOT pull it
-bash ksat-extra/shadow/tools/regen_golden_minisat.sh   # regenerate goldens (per solver)
+# regenerate goldens (per float solver; each has an -assume variant), minisat shown:
+bash ksat-extra/shadow/tools/regen_golden_minisat.sh
+bash ksat-extra/shadow/tools/regen_golden_minisat_assume.sh
+./gradlew jvmTest                       # now actually runs the trace comparison
+```
+
+The big php_10_9 instance is compared only with `-Dbigtrace` (it needs ~8 GB test heap):
+
+```bash
+./gradlew :minisat:jvmTest -Dbigtrace
 ```
 
 ## License
