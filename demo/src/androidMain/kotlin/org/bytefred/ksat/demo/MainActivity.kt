@@ -14,7 +14,7 @@ class MainActivity : Activity() {
             typeface = android.graphics.Typeface.MONOSPACE
             textSize = 14f
             setPadding(24, 24, 24, 24)
-            text = xorDemoReport()
+            text = XorDemo.report()
         }
         setContentView(ScrollView(this).apply { addView(text) })
     }

@@ -6,7 +6,7 @@ private fun showOnPage(text: String): Unit =
     js("{ document.body.innerHTML = '<h3>ksat SAT demo (Kotlin/Wasm)</h3><pre>' + text + '</pre>'; }")
 
 fun main() {
-    val report = xorDemoReport()
+    val report = XorDemo.report()
     println(report)
     showOnPage(report)
 }

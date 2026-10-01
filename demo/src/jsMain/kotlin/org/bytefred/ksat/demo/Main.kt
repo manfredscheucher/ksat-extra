@@ -7,7 +7,7 @@ private fun showOnPage(text: String) {
 }
 
 fun main() {
-    val report = xorDemoReport()
+    val report = XorDemo.report()
     println(report)
     showOnPage(report)
 }
