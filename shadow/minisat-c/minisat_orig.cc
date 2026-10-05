@@ -3,8 +3,10 @@ Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
 Copyright (c) 2007-2010, Niklas Sorensson
 
 VERBATIM COPY of MiniSat's core solver (minisat/core/Solver.cc), kept for reference.
-Upstream: https://github.com/niklasso/minisat (core/Solver.cc); no upstream commit pinned,
-matches the 2003-2010 MIT release credited above. We never edit this file.
+Upstream: MiniSat 2.2.0 core/Solver.cc (github.com/niklasso/minisat, final release),
+identified by the 2.2.0-only min_learnts_lim option + free_vars/user_pol/newVar(upol,dvar);
+no exact commit pinned. The optional SimpSolver preprocessing layer is not included here.
+We never edit this file.
 This file is the unmodified upstream Solver.cc; it is NOT compiled standalone here
 (it needs the full mtl/utils headers + zlib). The self-contained, instrumented, and
 buildable reference we actually run is minisat_trace.cc, which inlines the identical

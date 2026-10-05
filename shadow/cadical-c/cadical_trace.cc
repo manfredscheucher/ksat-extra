@@ -2,6 +2,10 @@
 
   INSTRUMENTED, SELF-CONTAINED reference of CaDiCaL's CORE CDCL solver.
 
+  Upstream: CaDiCaL 2.1.3 (github.com/arminbiere/cadical, tag/VERSION 2.1.3,
+  master @ f13d74439a5b5c963ac5b02d05ce93a8098018b8). Only the CDCL search core is
+  transcribed here; all inprocessing (elim/subsume/vivify/probe/etc.) is omitted.
+
   Copyright (c) 2016-2024, Armin Biere and the CaDiCaL authors (MIT). The algorithm
   here is transcribed from the upstream CaDiCaL core search
   (src/{decide,propagate,analyze,minimize,backtrack,restart,reduce,score,queue,

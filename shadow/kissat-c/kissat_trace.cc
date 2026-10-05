@@ -2,6 +2,11 @@
 
   INSTRUMENTED, SELF-CONTAINED reference of KISSAT's CORE CDCL solver.
 
+  Upstream: kissat 4.0.x (2024 line; github.com/arminbiere/kissat), identified by the
+  dynamic glue-histogram tier limits and the split-out tiers.c/promote.c. Only the CDCL
+  search core is transcribed here; all inprocessing (elim/subsume/vivify/probe/sweep/
+  congruence/kitten/etc.) is omitted.
+
   Copyright (c) 2019-2024, Armin Biere and the kissat authors (MIT). The algorithm
   here is transcribed from the upstream kissat core search
   (src/{search,decide,propsearch,proplit,analyze,deduce,minimize,learn,backtrack,
