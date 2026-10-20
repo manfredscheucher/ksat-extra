@@ -19,10 +19,13 @@ regenerated (needs a C/C++ compiler).
 
 ## Run the comparison
 
-The Kotlin shadow tests (in the main repo) look for `ksat-extra/shadow/`. Without it, or without
-the goldens, they just skip and `jvmTest` stays green. To actually run them, check out this
-submodule and regenerate the goldens (minisat/cadical/kissat each have an `-assume` variant too;
-minisat shown):
+The Kotlin shadow tests (in the main repo) look for `ksat-extra/shadow/`. Without it, or with a
+`golden-<solver>[-assume]/` dir that is missing or empty, they are reported as SKIPPED (visible
+in a normal `jvmTest` run, with the reason and the regen script) and `jvmTest` stays green. A
+half-generated state fails: a non-empty golden dir with a CNF that has no trace (or a
+`cnf-assume/` CNF without its `.assume`), or a missing `cnf/`/`cnf-assume/`. To actually run them,
+check out this submodule and regenerate the goldens (minisat/cadical/kissat each have an
+`-assume` variant too; minisat shown):
 
 ```bash
 git submodule update --init --checkout ksat-extra

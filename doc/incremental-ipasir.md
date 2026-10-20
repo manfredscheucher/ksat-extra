@@ -130,6 +130,25 @@ MICROSAT still throws (see TODO.md).
   existing `shadow/tools/regen_golden_*` scripts; all now pass at L1.
 - independent fresh reviewers on each change: all FAITHFUL / FAITHFUL-WITH-NITS, nits addressed
 
-## Not covered
+## Forced phases and fixed-assignment listener (CaDiCaL only)
 
-- `phase` / `unphase` and the fixed-assignment listener (general CaDiCaL API, not IPASIR-UP).
+Not IPASIR-UP, but the remaining small pieces of CaDiCaL's incremental API, ported the same way:
+- `phase(lit)` / `unphase(lit)` (ksat-common `ForcedPhases`): `phases.forced`, consulted first in
+  `decide_phase` (decide.cpp). `opts.forcephase` (default 0) and `force_saved_phase` (only lucky/
+  walk set it) are not ported.
+- `FixedAssignmentListener` + `connectFixedListener` / `disconnectFixedListener`
+  (ksat-common `FixedListening`): `mark_fixed` notifies the listener from all ported call sites
+  (`learn_unit_clause` via root `search_assign`, `assign_original_unit`, the `force_no_backtrack`
+  unit, `explain_external_propagations`). Units fixed before connecting are not replayed, as upstream.
+
+Spec test: `ksat/src/commonTest/.../PhaseAndFixedListenerTest.kt`. The "forced phases that form a
+model give that model" check is port-configuration behaviour: it holds because the port has no
+lucky phases / local search / rephasing / elimination (upstream defaults would try lucky
+assignments first).
+
+## Shadow tests without ksat-extra
+
+ksat-extra is optional, so the main repo's tests must pass without it (Manfred, 2026-10-20). When
+ksat-extra or its generated reference traces are missing, the shadow suites are reported as
+skipped (visible in the normal Gradle output, with how to enable them). Only an inconsistent,
+half-generated state (some traces present, others missing) fails.
