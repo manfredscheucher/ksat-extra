@@ -1,0 +1,10 @@
+bin_gadgets_r4.cnf
+transred_parity40.cnf
+compact_units_parity40.cnf
+equiv_expand_r4.cnf
+walk_parity56.cnf
+lucky_horn.cnf
+block_gadget_r4.cnf --block=1
+cover_gadget_r4.cnf --cover=1
+condition_gadget_r4.cnf --condition=1
+instantiate_gadget_r4.cnf --instantiate=1

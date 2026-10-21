@@ -66,3 +66,26 @@ Decisions taken while building it:
   lucky, walk, rephase, chrono, otfs stay on.
 - With the current shadow CNFs, `default` only differs from `plain` on php_8_7, php_9_8
   (and php_10_9): the small instances finish before any inprocessing is scheduled.
+
+## Integration (step 3, 2026-10-21)
+
+Harness: `solver/cadical/src/jvmTest/kotlin/org/bytefred/ksat/cadical/full/FullShadowTraceTest.kt`
+(main repo). For every `shadow/cnf/*.cnf` (php_10_9 only with `-Dbigtrace`) and every config in
+{plain, default} it runs `runShadow` like `build_and_trace.sh` runs the C driver
+(`--config=<config>`, no other options, proof tracer connected) and requires the trace to be
+line-for-line identical to `golden-cadical-full-<config>/<name>.trace` (L1); on a mismatch it
+prints the first differing line with +-5 lines of both sides. Verdict and (on SAT) the model
+are checked separately. Skips visibly when ksat-extra or the goldens are missing. Filters:
+`-Dfullshadow.only=a,b`, `-Dfullshadow.configs=plain`.
+
+Result of the first run of the translated port: L1 on all 16 CNFs under both `plain` and
+`default` (php_9_8: 1.37M / 708k trace lines), with no fix to search behaviour needed. The
+`default` traces of php_8_7 / php_9_8 exercise probe, vivify, subsume, elim, block, cover,
+ternary, decompose, transred, deduplicate, collect, rephase, walk and lucky.
+
+Integration cleanups done (no behaviour change on the traces): `searchAssignDriving` takes
+`Clause?` in SIGNATURES.md (upstream passes null for units); `assume.cpp` uses the
+`External.checkLearnedClause` wrapper instead of its inlined body; `External.checkFailing`
+translated now that `Solver` exists (only with `opts.check`); ElimHpp.kt comment points to
+backward.cpp. Open: `lookahead` may read literal 0 where upstream relies on NDEBUG undefined
+behaviour; kept as a loud check.
