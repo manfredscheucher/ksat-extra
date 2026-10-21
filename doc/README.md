@@ -13,5 +13,9 @@ The docs are written in Typst (`*.typ`, compiled to `*.pdf`).
   learned while porting, and the current status per solver.
 - **shadow-test-setup** — the mechanics of the shadow harness (the instrumented C
   reference, the shared trace format, how traces are generated and diffed).
+- **sat-techniques** — a tutorial on the techniques behind MiniSat, CaDiCaL and kissat (CDCL,
+  heuristics, clause management, pre/inprocessing like vivify/eliminate/probe, incremental use and
+  IPASIR-UP), each with a small worked example, plus a who-has-what table incl. the ksat ports.
+  Didactic companion to the port docs; source in `sat-techniques.typ` + `sat-techniques/`.
 - **benchmarks** — measured runtime comparison C vs Kotlin/JVM vs Kotlin/Native on
   pigeonhole instances, and why Kotlin/Native is slower than the JVM here.

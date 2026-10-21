@@ -25,6 +25,7 @@
   show heading.where(level: 3): it => block(above: 12pt, below: 6pt)[ #set text(size: 11.5pt, fill: ks-ink, weight: "bold"); #it ]
   show raw.where(block: true): it => block(fill: rgb("#F2F1EC"), inset: 9pt, radius: 3pt, width: 100%)[#it]
   show link: it => text(fill: ks-accent)[#it]
+  show table: set par(justify: false)
   v(6cm)
   align(center)[ #text(size: 28pt, weight: "bold", fill: ks-accent)[#title] \ #v(0.4cm)
     #if subtitle != none { text(size: 14pt, fill: ks-muted)[#subtitle] } #v(0.8cm)
@@ -32,3 +33,13 @@
   v(1fr); align(center)[ #text(size: 9pt, fill: ks-muted)[ksat-ports · Kotlin SAT solver ports] ]
   pagebreak(); outline(indent: auto, depth: 3); pagebreak(); body
 }
+
+// Worked example box for the SAT techniques tutorial.
+#let example(title: "Example", body) = block(
+  fill: rgb("#EEF3FA"), stroke: (left: 3pt + rgb("#1D4E89")), inset: 10pt, radius: 3pt, width: 100%,
+)[ #block(sticky: true, below: 0.65em)[#text(weight: "bold", fill: rgb("#1D4E89"))[#title]] #body ]
+
+// "Where to find it" footer for a technique: upstream files + port status.
+#let where(body) = block(
+  fill: rgb("#F2F1EC"), inset: 8pt, radius: 3pt, width: 100%,
+)[ #set par(justify: false); #text(size: 9pt, fill: rgb("#6B6B6B"))[#body] ]
