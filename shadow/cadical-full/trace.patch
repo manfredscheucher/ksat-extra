@@ -1,0 +1,380 @@
+--- a/analyze.cpp
++++ b/analyze.cpp
+@@ -500,6 +500,12 @@
+     res->used = 1 + (glue <= opts.reducetier2glue);
+   }
+ 
++  if (lstrace_on ()) { // LSTRACE
++    printf ("LEARN id=%" PRIu64 " glue=%d jump=%d :", res ? res->id : (uint64_t) 0,
++            glue, jump);
++    lstrace_lits (this, clause);
++    printf ("\n");
++  }
+   LOG ("jump level %d", jump);
+ 
+   return res;
+@@ -893,6 +899,11 @@
+   START (analyze);
+ 
+   assert (conflict);
++  if (lstrace_on ()) { // LSTRACE
++    printf ("CONFLICT level=%d %" PRIu64 " :", level, conflict->id);
++    lstrace_lits (this, *conflict);
++    printf ("\n");
++  }
+   assert (lrat_chain.empty ());
+   assert (unit_chain.empty ());
+   assert (unit_analyzed.empty ());
+@@ -1025,6 +1036,14 @@
+       const int other = reason->literals[0] ^ reason->literals[1] ^ uip;
+       assert (other != uip);
+       reason = on_the_fly_strengthen (reason, uip);
++      if (lstrace_on ()) { // LSTRACE
++        if (reason) {
++          printf ("OTFS %" PRIu64 " :", reason->id);
++          lstrace_lits (this, *reason);
++          printf ("\n");
++        } else
++          printf ("OTFS 0 : 0\n");
++      }
+       if (opts.bump)
+         bump_variables ();
+ 
+--- a/backtrack.cpp
++++ b/backtrack.cpp
+@@ -78,6 +78,7 @@
+   assert (new_level <= level);
+   if (new_level == level)
+     return;
++  LSTRACE ("BACKTRACK %d\n", new_level); // LSTRACE
+ 
+   stats.backtracks++;
+   update_target_and_best ();
+--- a/block.cpp
++++ b/block.cpp
+@@ -735,6 +735,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ bool Internal::block () {
++  LSTRACE_PHASE ("block"); // LSTRACE
+ 
+   if (!opts.block)
+     return false;
+--- a/collect.cpp
++++ b/collect.cpp
+@@ -518,6 +518,7 @@
+ bool Internal::arenaing () { return opts.arena && (stats.collections > 1); }
+ 
+ void Internal::garbage_collection () {
++  LSTRACE_PHASE ("collect"); // LSTRACE
+   if (unsat)
+     return;
+   START (collect);
+--- a/compact.cpp
++++ b/compact.cpp
+@@ -160,6 +160,7 @@
+ static signed char *ignore_clang_analyze_memory_leak_warning;
+ 
+ void Internal::compact () {
++  LSTRACE_PHASE ("compact"); // LSTRACE
+ 
+   START (compact);
+ 
+--- a/condition.cpp
++++ b/condition.cpp
+@@ -893,6 +893,7 @@
+ }
+ 
+ void Internal::condition (bool update_limits) {
++  LSTRACE_PHASE ("condition"); // LSTRACE
+ 
+   if (unsat)
+     return;
+--- a/cover.cpp
++++ b/cover.cpp
+@@ -643,6 +643,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ bool Internal::cover () {
++  LSTRACE_PHASE ("cover"); // LSTRACE
+ 
+   if (!opts.cover)
+     return false;
+--- a/decide.cpp
++++ b/decide.cpp
+@@ -90,6 +90,8 @@
+ //
+ void Internal::new_trail_level (int lit) {
+   level++;
++  if (!lit) // LSTRACE
++    LSTRACE ("DECIDE 0\n");
+   control.push_back (Level (lit, trail.size ()));
+ }
+ 
+--- a/decompose.cpp
++++ b/decompose.cpp
+@@ -734,6 +734,7 @@
+ }
+ 
+ void Internal::decompose () {
++  LSTRACE_PHASE ("decompose"); // LSTRACE
+   for (int round = 1; round <= opts.decomposerounds; round++)
+     if (!decompose_round ())
+       break;
+--- a/deduplicate.cpp
++++ b/deduplicate.cpp
+@@ -18,6 +18,7 @@
+ // of them nor their negation is considered as probe
+ 
+ void Internal::mark_duplicated_binary_clauses_as_garbage () {
++  LSTRACE_PHASE ("deduplicate"); // LSTRACE
+ 
+   if (!opts.deduplicate)
+     return;
+--- a/elim.cpp
++++ b/elim.cpp
+@@ -985,6 +985,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ void Internal::elim (bool update_limits) {
++  LSTRACE_PHASE ("elim"); // LSTRACE
+ 
+   if (unsat)
+     return;
+--- a/instantiate.cpp
++++ b/instantiate.cpp
+@@ -312,6 +312,7 @@
+ // 'collect_instantiation_candidates' routine.
+ 
+ void Internal::instantiate (Instantiator &instantiator) {
++  LSTRACE_PHASE ("instantiate"); // LSTRACE
+   assert (opts.instantiate);
+   START (instantiate);
+   stats.instrounds++;
+--- a/internal.cpp
++++ b/internal.cpp
+@@ -633,6 +633,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ bool Internal::preprocess_round (int round) {
++  LSTRACE_PHASE ("preprocess"); // LSTRACE
+   (void) round;
+   if (unsat)
+     return false;
+--- a/internal.hpp
++++ b/internal.hpp
+@@ -100,6 +100,7 @@
+ #include "version.hpp"
+ #include "vivify.hpp"
+ #include "watch.hpp"
++#include "lstrace.hpp" // LSTRACE
+ 
+ /*------------------------------------------------------------------------*/
+ 
+--- a/lstrace.hpp
++++ b/lstrace.hpp
+@@ -0,0 +1,49 @@
++#ifndef _lstrace_hpp_INCLUDED
++#define _lstrace_hpp_INCLUDED
++
++// Trace instrumentation for the ksat shadow reference (NOT upstream).
++// Added by ksat-extra/shadow/cadical-full/trace.patch. Output only: every
++// line goes to stdout and only when the environment variable LSTRACE is set.
++// Nothing here reads or writes solver state except through read-only
++// accessors ('externalize', clause literals, 'id').
++
++#include <cinttypes>
++#include <cstdio>
++#include <cstdlib>
++
++namespace CaDiCaL {
++
++inline bool lstrace_on () {
++  static const bool on = getenv ("LSTRACE") != 0;
++  return on;
++}
++
++#define LSTRACE(...) \
++  do { \
++    if (::CaDiCaL::lstrace_on ()) \
++      printf (__VA_ARGS__); \
++  } while (0)
++
++// Print ' <l1> <l2> ... <lk> 0' (external literals, stored order).
++// Templates so this header can be included before 'Internal' is complete.
++template <class I, class C>
++inline void lstrace_lits (I *internal, const C &lits) {
++  for (const auto &lit : lits)
++    printf (" %d", internal->externalize (lit));
++  printf (" 0");
++}
++
++// 'START <name>' when the enclosing upstream function is entered and
++// 'END <name>' when it is left (by any return path).
++struct LSTracePhase {
++  const char *name;
++  LSTracePhase (const char *n) : name (n) { LSTRACE ("START %s\n", name); }
++  ~LSTracePhase () { LSTRACE ("END %s\n", name); }
++};
++
++#define LSTRACE_PHASE(NAME) \
++  ::CaDiCaL::LSTracePhase lstrace_phase_guard (NAME)
++
++} // namespace CaDiCaL
++
++#endif
+--- a/lucky.cpp
++++ b/lucky.cpp
+@@ -336,6 +336,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ int Internal::lucky_phases () {
++  LSTRACE_PHASE ("lucky"); // LSTRACE
+   assert (!level);
+   require_mode (SEARCH);
+   if (!opts.lucky)
+--- a/probe.cpp
++++ b/probe.cpp
+@@ -862,6 +862,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ void CaDiCaL::Internal::probe (bool update_limits) {
++  LSTRACE_PHASE ("probe"); // LSTRACE
+ 
+   if (unsat)
+     return;
+--- a/propagate.cpp
++++ b/propagate.cpp
+@@ -107,6 +107,7 @@
+ 
+   const int idx = vidx (lit);
+   const bool from_external = reason == external_reason;
++  const Clause *const lstrace_reason = reason; // LSTRACE
+   assert (!val (idx));
+   assert (!flags (idx).eliminated () || reason == decision_reason ||
+           reason == external_reason);
+@@ -151,6 +152,20 @@
+   if (!searching_lucky_phases)
+     phases.saved[idx] = tmp; // phase saving during search
+   trail.push_back (lit);
++  if (lstrace_on ()) { // LSTRACE
++    printf ("ASSIGN %d level=%d reason=", externalize (lit), lit_level);
++    if (lstrace_reason == decision_reason)
++      printf ("D\n");
++    else if (!lit_level)
++      printf ("U\n");
++    else if (from_external)
++      printf ("E\n");
++    else {
++      printf ("C %" PRIu64 " :", reason->id);
++      lstrace_lits (this, *reason);
++      printf ("\n");
++    }
++  }
+ #ifdef LOGGING
+   if (!lit_level)
+     LOG ("root-level unit assign %d @ 0", lit);
+@@ -190,6 +205,7 @@
+   new_trail_level (lit);
+   notify_decision ();
+   LOG ("search decide %d", lit);
++  LSTRACE ("DECIDE %d\n", externalize (lit)); // LSTRACE
+   search_assign (lit, decision_reason);
+ }
+ 
+--- a/reduce.cpp
++++ b/reduce.cpp
+@@ -196,6 +196,7 @@
+   report ('.', 1);
+ 
+   bool flush = flushing ();
++  LSTRACE ("%s\n", flush ? "FLUSH" : "REDUCE"); // LSTRACE
+   if (flush)
+     stats.flush.count++;
+ 
+--- a/rephase.cpp
++++ b/rephase.cpp
+@@ -102,6 +102,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ void Internal::rephase () {
++  LSTRACE_PHASE ("rephase"); // LSTRACE
+ 
+   stats.rephased.total++;
+   PHASE ("rephase", stats.rephased.total,
+@@ -312,6 +313,7 @@
+   }
+   assert (type);
+ 
++  LSTRACE ("REPHASE %c\n", type); // LSTRACE
+   int64_t delta = opts.rephaseint * (stats.rephased.total + 1);
+   lim.rephase = stats.conflicts + delta;
+ 
+--- a/restart.cpp
++++ b/restart.cpp
+@@ -27,6 +27,7 @@
+     else
+       STOP (unstable);
+     stable = !stable;
++    LSTRACE ("MODE %s\n", stable ? "stable" : "focused"); // LSTRACE
+     if (stable)
+       stats.stabphases++;
+     PHASE ("stabilizing", stats.stabphases,
+@@ -120,6 +121,7 @@
+ 
+ void Internal::restart () {
+   START (restart);
++  LSTRACE ("RESTART\n"); // LSTRACE
+   stats.restarts++;
+   stats.restartlevels += level;
+   if (stable)
+--- a/subsume.cpp
++++ b/subsume.cpp
+@@ -650,6 +650,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ void Internal::subsume (bool update_limits) {
++  LSTRACE_PHASE ("subsume"); // LSTRACE
+ 
+   stats.subsumephases++;
+ 
+--- a/ternary.cpp
++++ b/ternary.cpp
+@@ -346,6 +346,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ bool Internal::ternary () {
++  LSTRACE_PHASE ("ternary"); // LSTRACE
+ 
+   if (!opts.ternary)
+     return false;
+--- a/transred.cpp
++++ b/transred.cpp
+@@ -9,6 +9,7 @@
+ // literals (in the binary implication graph).
+ 
+ void Internal::transred () {
++  LSTRACE_PHASE ("transred"); // LSTRACE
+ 
+   if (unsat)
+     return;
+--- a/vivify.cpp
++++ b/vivify.cpp
+@@ -1327,6 +1327,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ void Internal::vivify () {
++  LSTRACE_PHASE ("vivify"); // LSTRACE
+ 
+   if (unsat)
+     return;
+--- a/walk.cpp
++++ b/walk.cpp
+@@ -405,6 +405,7 @@
+ /*------------------------------------------------------------------------*/
+ 
+ int Internal::walk_round (int64_t limit, bool prev) {
++  LSTRACE_PHASE ("walk"); // LSTRACE
+ 
+   backtrack ();
+   if (propagated < trail.size () && !propagate ()) {
