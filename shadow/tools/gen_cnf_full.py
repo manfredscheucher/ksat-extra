@@ -31,8 +31,10 @@ limits count conflicts; scale(v) = v * log2(clauses/vars) if that ratio > 2):
     occurrence of a variable elim could not remove
 
 The `preprocess` phase (Internal::preprocess_round) only runs when the API call
-Solver::limit("preprocessing", n) is made with n > 0. The shadow driver has no
-way to make that call, so no CNF file can cover it.
+Solver::limit("preprocessing", n) is made with n > 0. The shadow driver makes
+that call for '--limit:preprocessing=<n>', so OPTIONS gets one extra line
+(EXTRA_RUNS) that runs an existing file again with that limit. A file may thus
+appear more than once in OPTIONS (once per option set).
 
 Families (see the functions below for details):
   planted_kcnf      random k-SAT with a hidden model sigma (every clause
@@ -489,6 +491,11 @@ def specs():
     return S
 
 
+# Extra OPTIONS lines for files already generated above (same file, other options).
+# preprocess_round itself emits no proof events; its probe/elim/condition do (nested).
+EXTRA_RUNS = ["bin_gadgets_r4.cnf --limit:preprocessing=1"]
+
+
 def write_cnf(path, nv, clauses, comment):
     lines = ["c " + c for c in comment.splitlines()]
     lines.append("p cnf %d %d" % (nv, len(clauses)))
@@ -510,6 +517,7 @@ def main():
         write_cnf(os.path.join(OUT_DIR, name), nv, cl, comment)
         manifest.append((name + " " + " ".join(opts)).rstrip())
         print("wrote %-28s vars=%-5d clauses=%-6d %s" % (name, nv, len(cl), " ".join(opts)))
+    manifest += EXTRA_RUNS
     with open(os.path.join(OUT_DIR, "OPTIONS"), "w") as f:
         f.write("\n".join(manifest) + "\n")
 

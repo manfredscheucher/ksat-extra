@@ -39,7 +39,8 @@ switch. Branch: `incremental`.
 
 In: everything the solver does (all of `src/*.cpp` that implements solving, inprocessing,
 incremental API, IPASIR-UP, model reconstruction, options, statistics as counters).
-Proof tracers (DRAT/LRAT/FRAT/VeriPB/IDRUP, checkers) come in a later wave, writing to a sink.
+Proof tracers (DRAT/LRAT/FRAT/VeriPB/IDRUP/LIDRUP, checkers, LRAT builder): proof wave, writing
+to a byte sink (see "Proof wave" below).
 Out (not a solver): `mobical.cpp` (fuzzer), `cadical.cpp` (CLI app), `ccadical.cpp`/`ipasir.cpp`
 (C API), terminal/signal/resources/file I/O and message formatting (mapped to no-ops or Kotlin
 equivalents where the solver logic needs them).
@@ -89,3 +90,55 @@ Integration cleanups done (no behaviour change on the traces): `searchAssignDriv
 translated now that `Solver` exists (only with `opts.check`); ElimHpp.kt comment points to
 backward.cpp. Open: `lookahead` may read literal 0 where upstream relies on NDEBUG undefined
 behaviour; kept as a loud check.
+
+### Live comparison (no golden files)
+
+The disk is too full for more golden traces, so a second harness compares against the C
+reference while both run: `FullLiveShadowTest.kt` (next to `FullShadowTraceTest.kt`) starts
+`cadical-full/build/cadical_full_trace` with `LSTRACE=1` via `ProcessBuilder`, drops its `s `/`c `
+lines like `build_and_trace.sh`, and compares each line against `runShadow` through a bounded
+queue (first difference reported with +-5 lines from a ring buffer; nothing is written to disk).
+Both drivers get exactly the same arguments. Suites: `cnfFull` (every `cnf-full/OPTIONS` line
+under `--config=default` + its arguments), `cnfAssume` (`cnf-assume/*.cnf` + `.assume`, plain and
+default), `bigPhp` (php_10_9 default, only with `-Dbigtrace`). Skips visibly without ksat-extra or
+the C binary. `FullShadowTraceTest` now also streams its golden trace (bounded memory; the
+512 MB test heap could not hold both php_9_8 traces) and writes only the context report.
+
+New driver option `--limit:<name>=<n>` (driver.cpp and `runShadow`): `Solver::limit` right
+before `solve`. Needed to reach `preprocess` (only runs with `limit("preprocessing", n > 0)`);
+`cnf-full/OPTIONS` has `bin_gadgets_r4.cnf --limit:preprocessing=1`, and
+`tools/cnf_full_coverage.sh` now reports every phase covered (preprocess counts as a phase
+without own proof events; its probe/elim/condition nest inside it).
+
+Result (2026-10-21): L1 on all 11 cnf-full runs, all 8 cnf-assume runs and php_10_9 default
+(5.5M lines; Kotlin 9.6 s vs C 4.9 s), with no fix to the port needed.
+
+## Proof wave (2026-10-21)
+
+Asked: port the remaining part 1:1 (drat/lrat/frat/veripb/idrup/lidrup tracers, DRUP checker,
+LRAT checker, LRAT builder), remove the `error(...)` placeholders, verify against upstream
+byte for byte without large files.
+
+Done: `DratTracer.kt`, `LratTracer.kt`, `FratTracer.kt`, `VeripbTracer.kt`, `IdrupTracer.kt`,
+`LidrupTracer.kt`, `Checker.kt`, `LratChecker.kt`, `LratBuilder.kt` (replaces the forward
+interface in ProofHpp.kt); `Internal.trace (file)`, `Internal.check ()` and
+`setupLratBuilder` in Proof.kt construct them as upstream. `File` (FileHpp.kt) now writes
+bytes to a `FileSink` (`put (unsigned char)` for the binary varints) and has
+`close` / `flush` / `closed` / `piping` (always false). `Solver.traceProof (FileSink, name)`
+added next to the `Appendable` one.
+
+Verification: the C driver got `--proof=<path>|-` (trace_proof / close_proof_trace), the
+Kotlin `runShadow` the same (`proofOut`, `lstrace = false` models LSTRACE unset).
+`solver/cadical/src/jvmTest/.../FullProofTest.kt` streams the C stdout and compares it byte
+by byte with the port (with `--quiet=1` so no `c` messages): 6 CNFs (php_5_4, php_6_5,
+hard_rand_unsat_60, unsat_small, cnf-full/transred_parity40, cnf-full/lucky_horn (SAT)) x
+16 format settings (drat/lrat/frat1 ascii+binary, frat2 binary, veripb 1-4, idrup/lidrup
+ascii+binary, lrat with externallrat): all 96 identical. Checkers: `check=1` with
+`checkproof` 1/2/3 and `externallrat=1` on the same CNFs: no checker error, upstream
+verdict, LRAT proof still byte-identical to C.
+
+Interpretation choices: VeriPB's `binary` member and `put_binary_*` helpers (only under
+`#ifndef NDEBUG`, never called) and the never-read `last_clause` / unused `delete_ids`
+members are not ported; `print_stats` / `print_statistics` / `dump` only print and are
+empty or not ported; `fatal_message_*` -> `error`.
+

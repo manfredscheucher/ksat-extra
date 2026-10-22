@@ -3,6 +3,15 @@
 Status of the incremental (IPASIR-style) interface across the Kotlin solver ports.
 Work lives on the `incremental` branch of each repo (main stays stable).
 
+> **Update 2026-10-22:** the facade's `Solver.CADICAL` now runs the FULL CaDiCaL 2.1.3 port
+> (`CaDiCaLFull`, see `cadical-full-port.md`). It behaves exactly like upstream: assumptions are
+> reset and the trail restored lazily, `failed()` runs upstream's lazy `failing()`, lucky phases /
+> local search / inprocessing are on by default. The CaDiCaL sections below describe the earlier
+> core port (class `CaDiCaL`, kept for its own shadow suite); its adaptations (eager
+> `backtrack(0)` after a solve, eagerly computed core) do not apply to the full port. The facade
+> tests pass on the full port; the two forced-phase tests now only check what upstream guarantees
+> (Manfred, 2026-10-22: "cadical 1:1 übernehmen so wies original is").
+
 ## What was asked
 
 Port the incremental pieces that are interesting from a Ksat point of view:
@@ -141,10 +150,9 @@ Not IPASIR-UP, but the remaining small pieces of CaDiCaL's incremental API, port
   (`learn_unit_clause` via root `search_assign`, `assign_original_unit`, the `force_no_backtrack`
   unit, `explain_external_propagations`). Units fixed before connecting are not replayed, as upstream.
 
-Spec test: `ksat/src/commonTest/.../PhaseAndFixedListenerTest.kt`. The "forced phases that form a
-model give that model" check is port-configuration behaviour: it holds because the port has no
-lucky phases / local search / rephasing / elimination (upstream defaults would try lucky
-assignments first).
+Spec test: `ksat/src/commonTest/.../PhaseAndFixedListenerTest.kt`. With the full port it only checks
+upstream guarantees (verdict unchanged, model valid, `phase` creates the variable); the exact
+model is not pinned because upstream's lucky phases may find another one first.
 
 ## Shadow tests without ksat-extra
 

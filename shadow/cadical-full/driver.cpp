@@ -1,16 +1,23 @@
 // Shadow-reference driver for the full CaDiCaL 2.1.3 port (NOT upstream).
 //
 // Usage: cadical_full_trace [--config=plain|default|sat|unsat] [--name=value ...]
+//                           [--limit:<name>=<n> ...] [--proof=<path>|-]
 //                           <file.cnf> [<file.assume>]
 //
 // Reads the CNF through the public Solver API (read_dimacs), applies the
 // configuration (Solver::configure) and options (Solver::set_long_option),
 // optionally assumes the literals of the assumptions file (whitespace
-// separated signed DIMACS literals, '0' ignored), solves and prints the
+// separated signed DIMACS literals, '0' ignored), applies each
+// '--limit:<name>=<n>' via Solver::limit (name, n) (e.g. preprocessing,
+// conflicts, localsearch; right before solve), solves and prints the
 // verdict. With LSTRACE set, the patched solver prints its search and
 // inprocessing events to stdout (see README.md), and this driver adds:
 //   * ADD/DEL/WEAKEN/STRENGTHEN lines from a CaDiCaL::Tracer (unless LSPROOF=0)
 //   * RESULT SAT|UNSAT|UNKNOWN and, for SAT, MODEL <lit_1> ... <lit_n> 0
+// With '--proof=<path>' the solver writes a proof to <path> ('-' = stdout) through
+// Solver::trace_proof right after the options are set (format by the upstream proof
+// options, e.g. --binary=0, --lrat=1, --frat=1, --veripb=1, --idrup=1, --lidrup=1)
+// and closes it with Solver::close_proof_trace right after solving.
 // Independent of LSTRACE it always prints 's SATISFIABLE' / 's UNSATISFIABLE'
 // / 's UNKNOWN' and exits with 10 / 20 / 0. Everything is deterministic.
 
@@ -18,9 +25,12 @@
 #include "tracer.hpp"
 
 #include <cinttypes>
+#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
+#include <utility>
 #include <vector>
 
 static bool env_set (const char *name) { return getenv (name) != 0; }
@@ -71,19 +81,33 @@ public:
 static void usage (const char *argv0) {
   fprintf (stderr,
            "usage: %s [--config=plain|default|sat|unsat] [--name=value ...] "
-           "<file.cnf> [<file.assume>]\n",
+           "[--limit:<name>=<n> ...] [--proof=<path>|-] <file.cnf> "
+           "[<file.assume>]\n",
            argv0);
 }
 
 int main (int argc, char **argv) {
   const char *config = 0;
+  const char *proof_path = 0;
   std::vector<const char *> options;
+  std::vector<std::pair<std::string, int>> limits;
   std::vector<const char *> files;
   for (int i = 1; i < argc; i++) {
     const char *arg = argv[i];
     if (!strncmp (arg, "--config=", 9))
       config = arg + 9;
-    else if (!strncmp (arg, "--", 2))
+    else if (!strncmp (arg, "--proof=", 8))
+      proof_path = arg + 8;
+    else if (!strncmp (arg, "--limit:", 8)) {
+      const char *eq = strchr (arg + 8, '=');
+      char *end = 0;
+      long n = eq ? strtol (eq + 1, &end, 10) : 0;
+      if (!eq || eq == arg + 8 || !eq[1] || *end || n < INT_MIN || n > INT_MAX) {
+        fprintf (stderr, "error: invalid limit '%s'\n", arg);
+        return 1;
+      }
+      limits.push_back (std::make_pair (std::string (arg + 8, eq), (int) n));
+    } else if (!strncmp (arg, "--", 2))
       options.push_back (arg);
     else
       files.push_back (arg);
@@ -107,6 +131,16 @@ int main (int argc, char **argv) {
       fprintf (stderr, "error: invalid option '%s'\n", opt);
       return 1;
     }
+
+  if (proof_path) {
+    const bool ok = strcmp (proof_path, "-")
+                        ? solver.trace_proof (proof_path)
+                        : solver.trace_proof (stdout, "<stdout>");
+    if (!ok) {
+      fprintf (stderr, "error: can not write proof to '%s'\n", proof_path);
+      return 1;
+    }
+  }
 
   LsTracer tracer;
   if (proof)
@@ -138,7 +172,16 @@ int main (int argc, char **argv) {
     }
   }
 
+  for (const auto &l : limits)
+    if (!solver.limit (l.first.c_str (), l.second)) {
+      fprintf (stderr, "error: invalid limit '--limit:%s=%d'\n",
+               l.first.c_str (), l.second);
+      return 1;
+    }
+
   const int res = solver.solve ();
+  if (proof_path)
+    solver.close_proof_trace ();
 
   if (trace) {
     if (res == 10) {

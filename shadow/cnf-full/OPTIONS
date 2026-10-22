@@ -8,3 +8,4 @@ block_gadget_r4.cnf --block=1
 cover_gadget_r4.cnf --cover=1
 condition_gadget_r4.cnf --condition=1
 instantiate_gadget_r4.cnf --instantiate=1
+bin_gadgets_r4.cnf --limit:preprocessing=1

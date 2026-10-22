@@ -45,11 +45,26 @@ run is repeated and must be byte-identical, and run once more without the proof 
 
 ## Driver
 
-    build/cadical_full_trace [--config=plain|default|sat|unsat] [--name=value ...] <file.cnf> [<file.assume>]
+    build/cadical_full_trace [--config=plain|default|sat|unsat] [--name=value ...]
+                             [--limit:<name>=<n> ...] [--proof=<path>|-]
+                             <file.cnf> [<file.assume>]
 
 Order of API calls: `Solver::configure(config)` (if given), `Solver::set_long_option`
 for each `--name=value`, `connect_proof_tracer` (if enabled), `read_dimacs(path, vars,
-strict=1)`, `assume` for each non-zero literal of the assumptions file, `solve`. Prints
+strict=1)`, `assume` for each non-zero literal of the assumptions file,
+`Solver::limit(name, n)` for each `--limit:<name>=<n>` (in the given order; names as in
+upstream `Internal::limit`: terminate, conflicts, decisions, preprocessing, localsearch;
+an unknown name or a malformed argument is an error, exit 1), `solve`. `--limit` exists
+because some phases are only reachable through that API: `preprocess`
+(`Internal::preprocess_round`) runs only with `limit("preprocessing", n > 0)`, so
+`../cnf-full/OPTIONS` runs `bin_gadgets_r4.cnf` a second time with
+`--limit:preprocessing=1`. The Kotlin driver (`runShadow`, `limits` parameter) does the
+same. With `--proof=<path>` (`-` = stdout) the driver calls `Solver::trace_proof` right
+after the options (format chosen by the upstream proof options: `--binary`, `--lrat`,
+`--frat`, `--veripb`, `--idrup`, `--lidrup`, `--externallrat`) and `close_proof_trace`
+right after `solve`; add `--quiet=1` when the proof goes to stdout, otherwise upstream's
+`c ...` messages are mixed in. `runShadow(..., proofOut, lstrace = false)` is the Kotlin
+side; `FullProofTest` compares both byte by byte. Prints
 `s SATISFIABLE` / `s UNSATISFIABLE` / `s UNKNOWN` (always) and exits 10 / 20 / 0.
 
 Configs are upstream's (`config.cpp`): `default` = option defaults; `plain` =

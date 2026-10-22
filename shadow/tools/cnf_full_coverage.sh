@@ -3,7 +3,8 @@
 #
 # For every cnf-full/*.cnf the instrumented upstream reference
 # (cadical-full/build/cadical_full_trace) runs with --config=default plus the
-# options from cnf-full/OPTIONS ("<file> <options...>", one line per file).
+# options from cnf-full/OPTIONS ("<file> <options...>", one line per run; a file
+# may appear again with other options, it is then reported as <file>[<options>]).
 # The trace is streamed (never stored) and counted:
 #   S    number of 'START <phase>' lines
 #   AD   ADD/DEL lines whose innermost open phase is <phase>
@@ -20,8 +21,7 @@
 #
 # Usage: bash ksat-extra/shadow/tools/cnf_full_coverage.sh
 #   Builds nothing; run cadical-full/build_and_trace.sh --build-only first.
-# Exit status 1 if a phase is not covered (known gaps such as preprocess are
-# reported but do not fail the run).
+# Exit status 1 if a phase is not covered.
 set -u
 export LC_ALL=C
 
@@ -40,11 +40,12 @@ die () { echo "cnf_full_coverage: ERROR: $*" >&2; exit 2; }
 phases="preprocess probe vivify subsume elim block cover condition ternary decompose transred instantiate deduplicate lucky walk rephase compact collect"
 events="CONFLICT REDUCE FLUSH RESTART MODE REPHASE OTFS"
 # Phases that emit no proof events of their own by design (lucky and walk only
-# assign, rephase only resets phases, compact only renumbers variables): they
+# assign, rephase only resets phases, compact only renumbers variables,
+# preprocess only calls probe/elim/condition, which nest inside it): they
 # count as covered when they have events (EV) or nested ADD/DEL (AD*).
-noproof="lucky walk rephase compact"
-# Phases no CNF file can reach with the shadow driver, with the reason.
-known_gap_preprocess="needs the API call Solver::limit(\"preprocessing\", n>0), which the driver cannot make"
+noproof="lucky walk rephase compact preprocess"
+# Phases no CNF file can reach with the shadow driver, with the reason (none now:
+# preprocess is reached through the driver option --limit:preprocessing=<n>).
 
 # Manifest and directory must agree exactly.
 for f in "$dir"/*.cnf; do
@@ -68,6 +69,8 @@ total_time=0
 while read -r name opts; do
   case "$name" in ''|'#'*) continue ;; esac
   cnf="$dir/$name"
+  key="$name"
+  [ -z "$opts" ] || key="$name[${opts// /,}]"
   # shellcheck disable=SC2086
   set -- $opts
 
@@ -80,7 +83,7 @@ while read -r name opts; do
   secs=$(echo "$end - $start" | bc)
 
   # 2) counting run, trace streamed into awk
-  LSTRACE=1 "$bin" --config=default "$@" "$cnf" | awk -v name="$name" -v secs="$secs" -v rc="$rc" -v opts="$opts" '
+  LSTRACE=1 "$bin" --config=default "$@" "$cnf" | awk -v name="$key" -v secs="$secs" -v rc="$rc" -v opts="$opts" '
     /^[sc] / { next }
     { bytes += length($0) + 1 }
     /^START / { sp++; stk[sp] = $2; S[$2]++; next }
@@ -104,10 +107,9 @@ while read -r name opts; do
 done < "$manifest"
 
 # ------------------------------------------------------------------ report
-awk -v phases="$phases" -v events="$events" -v noproof="$noproof" -v gap_pre="$known_gap_preprocess" '
+awk -v phases="$phases" -v events="$events" -v noproof="$noproof" '
   BEGIN { np = split(phases, P, " "); ne = split(events, EVN, " ")
-          nn = split(noproof, NP, " "); for (k = 1; k <= nn; k++) NOPROOF[NP[k]] = 1
-          GAP["preprocess"] = gap_pre }
+          nn = split(noproof, NP, " "); for (k = 1; k <= nn; k++) NOPROOF[NP[k]] = 1 }
   $1 == "FILE" { nf++; F[nf] = $2; T[$2] = $3; B[$2] = $4; R[$2] = ($5 == 10 ? "SAT" : "UNSAT"); O[$2] = $6
                  tb += $4; tt += $3; next }
   $1 == "PH"   { S[$2, $3] = $4; A[$2, $3] = $5; AI[$2, $3] = $6; V[$2, $3] = $7; next }
