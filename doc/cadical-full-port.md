@@ -88,8 +88,18 @@ Integration cleanups done (no behaviour change on the traces): `searchAssignDriv
 `Clause?` in SIGNATURES.md (upstream passes null for units); `assume.cpp` uses the
 `External.checkLearnedClause` wrapper instead of its inlined body; `External.checkFailing`
 translated now that `Solver` exists (only with `opts.check`); ElimHpp.kt comment points to
-backward.cpp. Open: `lookahead` may read literal 0 where upstream relies on NDEBUG undefined
-behaviour; kept as a loud check.
+backward.cpp. `lookahead_locc` sees literal 0 (the index 0 entry of `lookahead_populate_locc`);
+in the release build `active (0)` reads `ftab[0]`, an UNUSED `Flags`, so 0 is simply not
+active: well defined, no undefined behaviour (only the debug build's `vidx` assert would
+fire). The port follows release and reads `ftab[0]` directly.
+
+Release semantics (2026-10-22, owner: "cadical 1:1 übernehmen so wies original is"): the
+target is the release (`NDEBUG`) build the reference is made with. `#ifndef NDEBUG` /
+`#ifdef LOGGING` code is not ported; plain asserts stay as `check` (they cannot fire when the
+port matches upstream; fail loudly otherwise). Full rule in PORTING.md. The `CaDiCaLFull`
+facade adapter makes no checks of its own: API misuse fails in the port's `REQUIRE`
+(`IllegalStateException`) exactly where upstream fails, and `valueOf` is `val (v) > 0`
+(only in the satisfied state, as upstream).
 
 ### Live comparison (no golden files)
 
