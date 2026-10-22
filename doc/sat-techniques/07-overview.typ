@@ -39,7 +39,7 @@ these techniques beyond plain CDCL).
   [Local search (walk)], [#n], [#y `walk.cpp`], [#y `walk.c`], [not ported],
   [Lookahead / cubing], [#n], [#y `lookahead.cpp`], [#n], [not ported],
   [LBD / glue tiers + reduce], [activity-based], [#y `reduce.cpp`], [#y `reduce.c`, `tiers.c`], [all three (own variant each)],
-  [Garbage collection], [#y core], [#y `collect.cpp`], [#y `collect.c`], [own memory layout],
+  [Garbage collection], [#y core], [#y `collect.cpp`], [#y `collect.c`], [MiniSat (upstream layout); others own layout],
   [Variable compaction], [#n], [#y `compact.cpp`], [#y `compact.c`], [not ported],
 )
 
@@ -49,8 +49,8 @@ these techniques beyond plain CDCL).
   columns: (auto, auto, auto, auto, auto),
   align: (left, center, center, center, left),
   [*Technique*], [*MiniSat*], [*CaDiCaL*], [*kissat*], [*ksat ports*],
-  [Subsumption, strengthening], [#y simp], [#y `subsume.cpp`], [#y `forward.c`], [not ported],
-  [Bounded variable elimination], [#y simp], [#y `elim.cpp`], [#y `eliminate.c`], [not ported],
+  [Subsumption, strengthening], [#y simp], [#y `subsume.cpp`], [#y `forward.c`], [MiniSat (simp)],
+  [Bounded variable elimination], [#y simp], [#y `elim.cpp`], [#y `eliminate.c`], [MiniSat (simp)],
   [Fast elimination (fastel)], [#n], [#n], [#y `fastel.c` (off by default, preprocessing only)], [not ported],
   [Gate / definition detection], [#n], [#y `gates.cpp`], [#y `gates.c`, `ands.c`, `ifthenelse.c`, `definition.c`, `equivalences.c`], [not ported],
   [Blocked clause elimination], [#n], [#y `block.cpp` (off by default)], [#n], [not ported],
@@ -58,7 +58,7 @@ these techniques beyond plain CDCL).
   [Conditioning (globally blocked)], [#n], [#y `condition.cpp` (off by default)], [#n], [not ported],
   [Instantiation], [#n], [#y `instantiate.cpp` (off by default)], [#n], [not ported],
   [Factorization (BVA)], [#n], [#n], [#y `factor.c`], [not ported],
-  [Model reconstruction], [#y simp], [#y `extend.cpp`], [#y `extend.c`], [not needed (nothing eliminated)],
+  [Model reconstruction], [#y simp], [#y `extend.cpp`], [#y `extend.c`], [MiniSat (simp)],
   [Failed literal probing (+ hyper-binary resolution)], [#n], [#y `probe.cpp`], [binary only, `backbone.c` (see below)], [not ported],
   [Vivification], [#n], [#y `vivify.cpp`], [#y `vivify.c`], [not ported],
   [Equivalent literal substitution], [#n], [#y `decompose.cpp`], [#y `substitute.c`], [not ported],
@@ -92,5 +92,7 @@ literals over binary clauses are found by `backbone.c`, and kissat has no hyper-
   instrumented C references. Every simplification technique changes the formula and the search
   trace, so each one would need its counterpart in the C reference before it could be verified
   the same way. The core plus the incremental API is what the Kotlin side needs; the rest is
-  where the original solvers get their speed on hard instances.
+  where the original solvers get their speed on hard instances. Exception: MiniSat's `simp`
+  layer (`SimpSolver`) is ported in full and checked step by step against the instrumented
+  upstream (meelgroup/minisat), like the core.
 ]

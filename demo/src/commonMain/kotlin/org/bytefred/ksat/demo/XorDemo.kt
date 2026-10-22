@@ -29,7 +29,7 @@ object XorDemo {
     /**
      * The full demo report as one string — the entry point every target calls. [target] names
      * the platform (e.g. "JVM", "Kotlin/JS") for a uniform header "ksat demo (<target>)". Shows
-     * the header, then the CNF once, then one block per solver (all four), blocks blank-separated.
+     * the header, then the CNF once, then one block per [Solver] entry, blocks blank-separated.
      */
     fun report(target: String): String {
         val out = ArrayList<String>()
