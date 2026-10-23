@@ -25,6 +25,16 @@ lessons*.
   tracks this per solver.
 ]
 
+#note(title: "CaDiCaL core port removed (2026-10-22)")[
+  The CaDiCaL core port (class `CaDiCaL` with all inprocessing off) and its hand-transcribed
+  reference `shadow/cadical-c/cadical_trace.cc` (with `regen_golden_cadical*.sh`,
+  `validate_upstream_cadical.sh` and the `golden-cadical*` tests) were deleted on the owner's
+  decision. The full 1:1 port of CaDiCaL 2.1.3, checked against the instrumented real upstream
+  in `shadow/cadical-full/`, replaced it and took over the name `CaDiCaL` (see
+  `cadical-full-port.md`). The "CaDiCaL core" lessons below are kept as history; they still
+  hold for the full port.
+]
+
 = The shadowing procedure (per solver)
 
 + *Copy, never edit upstream.* The originals live read-only in `../other_repos/`.
@@ -364,7 +374,7 @@ never delete): they are the regression corpus.
   recursive minimize (`shrink=3`), reason-side literal bumping (`bumpreasons=1`), eager
   subsumption of the last few learned clauses (`eagersubsume=4`), random decisions
   (`randec=1`), and jump-reasons. The core milestone turns all of these OFF (documented in
-  the C header and the Kotlin KDoc), exactly as `cadical_trace.cc` disabled CaDiCaL's
+  the C header and the Kotlin KDoc), exactly as the (removed) `cadical_trace.cc` disabled CaDiCaL's
   `chrono`/`otfs`/`shrink`. With `chrono=0`, `kissat_determine_new_level` degenerates to
   "always return the jump level", which is what makes backtracking reproducible. *Re-check
   rule:* for each new Biere solver, audit the option defaults for search-path-perturbing (but
@@ -401,20 +411,20 @@ never delete): they are the regression corpus.
   [MicroSAT], [yes], [L1 (full trace), verified 15 CNFs\ + verbatim-upstream verdict oracle], [*yes* — REDUCE trace-covered\ via `maxLemmasInit`/`LSMAXLEMMAS`\ knob on php_5_4/php_6_5], [yes (0.8–6 ms/inst)],
   [MiniSat], [yes], [*L1 verified + hard-gated*\ (FLOAT32 activity)],
     [yes (php_6_5/7_6/8_7)], [yes],
-  [CaDiCaL core], [yes], [*L1 verified + hard-gated*\ (FLOAT64 == C `double`\ scores/EMAs)],
-    [yes (php_6_5/7_6/8_7\ at stock intervals; php_8_7\ = 178k trace lines)],
-    [yes; + real upstream\ `cadical` oracle agrees\ on all 15 CNFs],
+  [CaDiCaL core], [removed\ 2026-10-22], [was L1 vs `cadical_trace.cc`;\ replaced by CaDiCaL full], [—], [—],
   [kissat core], [yes], [*L1 verified + hard-gated*\ (FLOAT64, positional\ heap tie-break)],
     [yes (php_7_6/8_7;\ php_8_7 = 146k lines)],
     [yes; + real upstream\ `kissat` oracle agrees\ on all 15 CNFs],
-  [CaDiCaL full], [no], [—], [—], [—],
+  [CaDiCaL full], [yes], [*L1* vs instrumented\ real upstream 2.1.3\ (`cnf/`, `cnf-full/`, `cnf-assume/`;\ plain + default; proofs byte-identical)],
+    [yes (upstream defaults)], [not yet (`benchmark_cadical.sh`\ retargeted 2026-10-22)],
 )
 
 Update this table as each port lands. When a new lesson is added above, walk the
 "yes" rows and confirm each still complies.
 
 #note[
-  *(CaDiCaL core — verification pending, blocked on disk space, 2026-09-01)* The
+  *(Historical: the core port and these scripts except `benchmark_cadical.sh` were removed
+  2026-10-22.)* *(CaDiCaL core — verification pending, blocked on disk space, 2026-09-01)* The
   CaDiCaL core port, its Gradle module, the shadow test (with the hard L1 gate and the
   RESTART/REDUCE coverage test), and all three tool scripts
   (`regen_golden_cadical.sh`, `validate_upstream_cadical.sh`, `benchmark_cadical.sh`)

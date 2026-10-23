@@ -1,8 +1,9 @@
 # cadical-full: instrumented upstream CaDiCaL 2.1.3 (shadow reference)
 
 Reference for the full 1:1 Kotlin port of CaDiCaL (see `../../doc/cadical-full-port.md`).
-Unlike `../cadical-c/cadical_trace.cc` (a hand transcription of the core), this is the
-real upstream solver, unmodified, plus trace prints.
+It replaced the old hand transcription of the core, `cadical-c/cadical_trace.cc` (removed
+2026-10-22 with the old core port); this is the real upstream solver, unmodified, plus trace
+prints.
 
 | File | What |
 |---|---|
@@ -155,7 +156,7 @@ still prints `START x` / `END x`:
 | `compact` | `Internal::compact` |
 | `collect` | `Internal::garbage_collection` |
 
-Relation to the old core vocabulary (`../cadical-c`): `DECIDE`, `RESTART`, `REDUCE`,
+Relation to the vocabulary of the removed core reference (`cadical-c`): `DECIDE`, `RESTART`, `REDUCE`,
 `RESULT` are the same lines; `ASSIGN` and `CONFLICT` keep their prefix and add fields
 (`reason=C` becomes `reason=C <id> :<lits>`); everything else is new.
 

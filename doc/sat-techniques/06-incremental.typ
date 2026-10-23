@@ -552,8 +552,8 @@ connecting are not replayed.
 
 Why it matters: forced phases let a program say "I expect roughly this solution" (for example
 the previous solution in a sequence of similar queries) and get it back when it is still a
-model. In the ksat port that holds exactly, because the port has no lucky phases or local
-search; upstream CaDiCaL may try those first and return another model. The fixed listener lets
+model. Not always exactly: CaDiCaL (upstream and the ksat port, which behaves the same) may
+try lucky phases or local search first and return another model. The fixed listener lets
 the program learn facts that hold in every model while the solver runs, for example to prune
 its own search space or to stop asking questions whose answer is already fixed.
 

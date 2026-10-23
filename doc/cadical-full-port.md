@@ -9,8 +9,9 @@ deviate only for an upstream bug that can be isolated and reproduced.
 
 ## Key decision: the reference becomes real upstream
 
-The existing shadow reference `shadow/cadical-c/cadical_trace.cc` is a simplified
-re-implementation of the core, and it deviates from upstream 2.1.3 in places (reduce schedule and
+The then existing shadow reference `shadow/cadical-c/cadical_trace.cc` (removed 2026-10-22, see
+"Old core port removed" below) was a simplified
+re-implementation of the core, and it deviated from upstream 2.1.3 in places (reduce schedule and
 `keep` flag, two restart margins, no root-level `mark_satisfied` during search; found while
 writing the SAT techniques tutorial). A full port cannot be checked against it.
 
@@ -32,8 +33,8 @@ match this reference with upstream default options, step by step.
 4. Switch over: the facade's `Solver.CADICAL` uses the full port once it passes every existing test
    (facade tests incl. IPASIR-UP / failed / phase / listener) and the new shadow suite.
 
-The new code lives next to the old port in package `org.bytefred.ksat.cadical.full` until the
-switch. Branch: `incremental`.
+The new code lives in package `org.bytefred.ksat.cadical.full` (next to the old port until the
+switch; the old port is gone since 2026-10-22). Branch: `incremental`.
 
 ## Scope
 
@@ -96,7 +97,7 @@ fire). The port follows release and reads `ftab[0]` directly.
 Release semantics (2026-10-22, owner: "cadical 1:1 übernehmen so wies original is"): the
 target is the release (`NDEBUG`) build the reference is made with. `#ifndef NDEBUG` /
 `#ifdef LOGGING` code is not ported; plain asserts stay as `check` (they cannot fire when the
-port matches upstream; fail loudly otherwise). Full rule in PORTING.md. The `CaDiCaLFull`
+port matches upstream; fail loudly otherwise). Full rule in PORTING.md. The `CaDiCaL`
 facade adapter makes no checks of its own: API misuse fails in the port's `REQUIRE`
 (`IllegalStateException`) exactly where upstream fails, and `valueOf` is `val (v) > 0`
 (only in the satisfied state, as upstream).
@@ -152,3 +153,27 @@ Interpretation choices: VeriPB's `binary` member and `put_binary_*` helpers (onl
 members are not ported; `print_stats` / `print_statistics` / `dump` only print and are
 empty or not ported; `fatal_message_*` -> `error`.
 
+## Old core port removed (2026-10-22)
+
+Owner decision (Manfred, 2026-10-22): "Alten CaDiCaL-Kernport löschen". The facade had used the
+full port for a while, so the old core port and everything that only served it were deleted:
+
+- `cadical-kotlin`: the old class `CaDiCaL` (`CaDiCaL.kt`, CDCL core only, all inprocessing off)
+  and its `ActivityPrecision` knob. `IntArrayList` / `BooleanList`, which the full port uses,
+  moved unchanged to `IntArrayList.kt` (same package).
+- main repo `solver/cadical/src/jvmTest`: `ShadowTraceFilesTest`, `ShadowAssumeTraceFilesTest`
+  (golden traces `golden-cadical[-assume]/` of the old reference).
+- ksat-extra: the hand-written reference `shadow/cadical-c/cadical_trace.cc` and the scripts
+  `regen_golden_cadical.sh`, `regen_golden_cadical_assume.sh`, `validate_upstream_cadical.sh`
+  (it compared `cadical_trace` verdicts against a real `cadical` binary; the full port is checked
+  against real upstream directly).
+
+Kept and retargeted to the full port:
+- `CaDiCaLSanityTest` (common, all targets: verdicts + model check), unchanged except the KDoc.
+- `Benchmark.kt` (`:cadical:runBenchmark`) and `shadow/tools/benchmark_cadical.sh`: the script now
+  builds the upstream reference with `cadical-full/build_and_trace.sh --build-only` and times
+  `cadical_full_trace` without `LSTRACE` (default options, no trace, no proof tracer).
+
+Rename: the adapter `CaDiCaLFull` took over the free name, `org.bytefred.ksat.cadical.CaDiCaL`
+(file `CaDiCaL.kt`); the facade (`Ksat.kt`) uses it. The translation itself stays in package
+`org.bytefred.ksat.cadical.full`; the `Full*` test names refer to that package.

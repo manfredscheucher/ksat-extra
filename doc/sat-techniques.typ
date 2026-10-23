@@ -19,6 +19,13 @@ lives, and whether the ksat Kotlin ports have it.
 ksat has four solver ports: MicroSAT (a minimal solver, plain solve only, not covered further
 here), MiniSat, CaDiCaL and kissat.
 
+#note(title: "CaDiCaL: \"ksat port\" remarks are historical")[
+  The "ksat port" remarks for CaDiCaL in the "where" boxes were written for the old CaDiCaL core
+  port (CDCL core only, all inprocessing off), which was removed on 2026-10-22. The current
+  CaDiCaL port is a 1:1 translation of all of CaDiCaL 2.1.3 (every technique, incremental API,
+  proofs; see `cadical-full-port.md`) and behaves exactly like upstream with default options.
+]
+
 The chapters build on each other. Chapter 1 (the CDCL loop) is the foundation; chapters 2–3
 make that loop fast; chapters 4–5 shrink the formula itself; chapter 6 is about using a solver
 incrementally from a program; chapter 7 is a one-page map.

@@ -3,14 +3,15 @@
 Status of the incremental (IPASIR-style) interface across the Kotlin solver ports.
 Work lives on the `incremental` branch of each repo (main stays stable).
 
-> **Update 2026-10-22:** the facade's `Solver.CADICAL` now runs the FULL CaDiCaL 2.1.3 port
-> (`CaDiCaLFull`, see `cadical-full-port.md`). It behaves exactly like upstream: assumptions are
+> **Update 2026-10-22:** the facade's `Solver.CADICAL` runs the FULL CaDiCaL 2.1.3 port
+> (class `CaDiCaL`, see `cadical-full-port.md`). It behaves exactly like upstream: assumptions are
 > reset and the trail restored lazily, `failed()` runs upstream's lazy `failing()`, lucky phases /
-> local search / inprocessing are on by default. The CaDiCaL sections below describe the earlier
-> core port (class `CaDiCaL`, kept for its own shadow suite); its adaptations (eager
-> `backtrack(0)` after a solve, eagerly computed core) do not apply to the full port. The facade
-> tests pass on the full port; the two forced-phase tests now only check what upstream guarantees
-> (Manfred, 2026-10-22: "cadical 1:1 übernehmen so wies original is").
+> local search / inprocessing are on by default. The facade tests pass on the full port; the two
+> forced-phase tests now only check what upstream guarantees (Manfred, 2026-10-22: "cadical 1:1
+> übernehmen so wies original is"). The earlier CaDiCaL core port (CDCL core only, all
+> inprocessing off), for which the CaDiCaL work below was first done, was removed the same day
+> ("Alten CaDiCaL-Kernport löschen"). The CaDiCaL parts below describe the full port; what only
+> applied to the core port is kept as notes marked *historical (core port)*.
 
 ## What was asked
 
@@ -22,11 +23,13 @@ Port the incremental pieces that are interesting from a Ksat point of view:
  Porting every CaDiCaL parameter / all of kissat's inprocessing was explicitly dropped:
 a Kotlin port is ~1.3x slower than C/C++, so full feature parity is not worth it. The
 value is a faithful, trace-verifiable core with the incremental API on top.
+(Superseded for CaDiCaL on 2026-10-21: "alles portieren für cadical", see `cadical-full-port.md`.)
 
 Hard rule throughout: translate existing upstream code 1:1, line by line. Do not invent.
-Where an upstream branch has no counterpart in the core-only port (proof/LRAT, external
-propagator, chrono, ILB, constraint API), it is omitted as vacuous — the same reduction the
-ports already make elsewhere, confirmed by fresh review each time.
+Where an upstream branch has no counterpart in a core-only port (kissat; historically the
+CaDiCaL core port: proof/LRAT, chrono, ILB, constraint API), it is omitted as vacuous, the same
+reduction the ports already make elsewhere, confirmed by fresh review each time. The full
+CaDiCaL port has every branch.
 
 ## add-clause-after-solve + post-solve unit (CaDiCaL + kissat)
 
@@ -40,11 +43,14 @@ over a dirty level>0 trail (left by the previous solve) put a unit at the wrong 
 position, so the next `backtrack(0)` unassigned it (CaDiCaL) or `decide()` walked off the
 queue (kissat, `lit(-1) = -2` → out of bounds).
 
-Fix (both solvers), faithful to upstream:
+Fix (kissat, and the removed CaDiCaL core port), faithful to upstream:
 - restore to level 0 at (re-)solve entry (mirrors CaDiCaL `already_solved`; kissat enters
   search at level 0)
 - restore to level 0 before importing an original clause (mirrors the two upstream import
   paths above), so a post-solve unit lands at level 0 and survives
+
+CaDiCaL today: the full port translates `add_new_original_clause` and the solve entry 1:1, so
+it has upstream's own lazy backtrack; no port-specific fix is involved.
 
 kissat extra: upstream `decide.c` guards the queue walk with `assert(solver->unassigned)` and
 `assert(!DISCONNECTED(res))`. The port had dropped these, so the broken invariant surfaced as
@@ -61,17 +67,14 @@ delegates). After an UNSAT solve under assumptions, `failed(lit)` reports whethe
 DIMACS assumption `lit` is in the core, as in IPASIR `ipasir_failed`. After SAT, or when the
 UNSAT does not depend on any assumption, it returns false.
 
-CaDiCaL: ported 1:1 from `Internal::failing()` (assume.cpp), non-LRAT path: root-falsified unit,
-clashing pair, or min-level `first_failed` plus a BFS over the implication graph collecting the
-full assumption core. Proof/LRAT and the constraint branch are omitted as vacuous; the
-`external_reason` branches are translated (they matter once a propagator is connected). The
-upstream `marked_failed` flag is mirrored: `decide()` clears it when an assumption is falsified,
-learning the empty clause sets it, and `failing()` only runs while it is false. So a root UNSAT
-found during search under assumptions gives an empty core instead of running `failing()`.
+CaDiCaL: the full port translates `Internal::failing()` (assume.cpp) completely, including the
+LRAT and constraint branches, and `failed()` calls it lazily exactly as upstream (only in the
+unsatisfied state, guarded by `marked_failed`). A root UNSAT found during search under
+assumptions gives an empty core, as upstream.
 
-Adaptation forced by the port: upstream `failed()` is lazy, but `solve(assumptions)` backtracks
-to level 0 right after the solve so the instance is reusable, which destroys the state
-`failing()` needs. The core is therefore computed at the UNSAT exit before the rollback.
+*Historical (core port):* the core port translated only the non-LRAT path (proof/LRAT and the
+constraint branch omitted as vacuous) and computed the core eagerly at the UNSAT exit, because
+it backtracked to level 0 right after the solve, which destroys the state `failing()` needs.
 
 MiniSat: ported 1:1 from `Solver::analyzeFinal` and the `conflict` vector (Solver.cc 2.2.0),
 called where upstream calls it (falsified assumption in `search`), `conflict.clear()` at solve
@@ -93,13 +96,13 @@ host capability with the Solver IPASIR-UP block: connect/disconnect, add/remove/
 vars, `isDecision`, `forceBacktrack`. The facade `Ksat` implements it and throws for solvers that
 don't host propagators.
 
-CaDiCaL: ported from external_propagate.cpp plus every IPASIR-UP hook in the functions the port
-has (cdcl loop, decide/ask_decision, backtrack/notify_backtrack incl. out-of-order reassignment,
-analyze conflict-level handling and lazy external reasons, minimize, failing, reduce, the
-`from_propagator` path of add_new_original_clause, external_check_solution). chrono is off in the
-port, so the `opts.chrono == 0` branches are used. Not translated because the enclosing feature
-does not exist here: `private_steps` (lucky/local search/lookahead), ILB/tainted literals,
-`renotify_*`, elimination/extend, LRAT/proof, stats, constraint branches.
+CaDiCaL: the full port translates external_propagate.cpp and every IPASIR-UP hook upstream has,
+including `private_steps` (lucky/local search/lookahead), ILB/tainted literals, `renotify_*`,
+elimination/extend and the LRAT/proof branches, with upstream default options (chrono on).
+
+*Historical (core port):* the core port only had the hooks in the functions it ported (cdcl loop,
+decide/ask_decision, backtrack/notify_backtrack, analyze, minimize, failing, reduce, the
+`from_propagator` path of add_new_original_clause, external_check_solution), with chrono off.
 
 Upstream behaviour kept on purpose (decision with Manfred, 2026-10-20: follow upstream; only
 deviate for an upstream bug that can be isolated and reproduced):
@@ -111,9 +114,9 @@ deviate for an upstream bug that can be isolated and reproduced):
 - API calls from inside a propagator callback (`addClause`, `solve`, `failed`, removing observed
   vars, connect/disconnect) throw, mirroring upstream's REQUIRE_VALID/READY_STATE.
 
-One adaptation forced by the port: the eager `backtrack(0)` after `solve(assumptions)` delivers
-`notifyBacktrack(0)` at the end of that solve; upstream backtracks lazily at the next solve/add,
-so the propagator sees the same backtrack, only earlier.
+*Historical (core port):* its eager `backtrack(0)` after `solve(assumptions)` delivered
+`notifyBacktrack(0)` at the end of that solve. The full port backtracks lazily at the next
+solve/add, as upstream.
 
 MiniSat, kissat, microsat: no IPASIR-UP upstream, nothing to translate.
 
@@ -133,7 +136,9 @@ MICROSAT still throws (see TODO.md).
 
 - facade tests green (add-after-solve × 3 solvers; failed-core × CaDiCaL cases)
 - shadow L1 single-solve + assume traces byte-for-byte for MiniSat, CaDiCaL and kissat (the
-  incremental code never fires without a propagator / post-solve add)
+  incremental code never fires without a propagator / post-solve add). Historical for CaDiCaL:
+  those were the core port's golden suites; the full port is checked by `FullShadowTraceTest`,
+  `FullLiveShadowTest` (incl. `cnf-assume/`) and `FullProofTest` (see `cadical-full-port.md`)
 - found on the way: the MiniSat shadow suite and the CaDiCaL/kissat assume suites had been
   skipping silently (their reference-trace dirs were never generated). Regenerated with the
   existing `shadow/tools/regen_golden_*` scripts; all now pass at L1.
@@ -143,12 +148,11 @@ MICROSAT still throws (see TODO.md).
 
 Not IPASIR-UP, but the remaining small pieces of CaDiCaL's incremental API, ported the same way:
 - `phase(lit)` / `unphase(lit)` (ksat-common `ForcedPhases`): `phases.forced`, consulted first in
-  `decide_phase` (decide.cpp). `opts.forcephase` (default 0) and `force_saved_phase` (only lucky/
-  walk set it) are not ported.
+  `decide_phase` (decide.cpp). The full port also has `opts.forcephase` and `force_saved_phase`
+  (lucky/walk), which the core port left out.
 - `FixedAssignmentListener` + `connectFixedListener` / `disconnectFixedListener`
-  (ksat-common `FixedListening`): `mark_fixed` notifies the listener from all ported call sites
-  (`learn_unit_clause` via root `search_assign`, `assign_original_unit`, the `force_no_backtrack`
-  unit, `explain_external_propagations`). Units fixed before connecting are not replayed, as upstream.
+  (ksat-common `FixedListening`): `mark_fixed` notifies the listener from every upstream call
+  site. Units fixed before connecting are not replayed, as upstream.
 
 Spec test: `ksat/src/commonTest/.../PhaseAndFixedListenerTest.kt`. With the full port it only checks
 upstream guarantees (verdict unchanged, model valid, `phase` creates the variable); the exact

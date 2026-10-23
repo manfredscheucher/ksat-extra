@@ -7,9 +7,12 @@ Full methodology and per-solver status: [`../doc/`](../doc/README.md).
 
 ## What's here
 
-- `microsat-c/`, `minisat-c/`, `cadical-c/`, `kissat-c/` — the C/C++ references. `*_orig` are
-  verbatim upstream copies (microSAT, MiniSat); `*_trace` are self-contained instrumented
-  transcriptions of the CDCL core (CaDiCaL, kissat) that print the trace.
+- `microsat-c/`, `minisat-c/`, `kissat-c/` — the C references. `*_orig` are verbatim upstream
+  copies (microSAT, MiniSat); `kissat_trace` is a self-contained instrumented transcription of
+  the kissat CDCL core that prints the trace.
+- `cadical-full/`, `minisat-full/` — verbatim upstream sources plus a trace patch, the references
+  for the full 1:1 ports (see their READMEs). `cadical-full/` replaced the old hand transcription
+  `cadical-c/cadical_trace.cc` (removed 2026-10-22 together with the old CaDiCaL core port).
 - `cnf/`, `cnf-assume/` — the test CNFs (pigeonhole PHP instances etc.).
 - `tools/` — scripts to generate CNFs, build the C references, and regenerate the golden traces.
 - `BENCHMARK_RESULTS.md` — the raw runtime benchmark table.
@@ -24,8 +27,9 @@ The Kotlin shadow tests (in the main repo) look for `ksat-extra/shadow/`. Withou
 in a normal `jvmTest` run, with the reason and the regen script) and `jvmTest` stays green. A
 half-generated state fails: a non-empty golden dir with a CNF that has no trace (or a
 `cnf-assume/` CNF without its `.assume`), or a missing `cnf/`/`cnf-assume/`. To actually run them,
-check out this submodule and regenerate the goldens (minisat/cadical/kissat each have an
-`-assume` variant too; minisat shown):
+check out this submodule and regenerate the goldens (minisat/kissat each have an
+`-assume` variant too; minisat shown; CaDiCaL uses `cadical-full/build_and_trace.sh`, see
+`cadical-full/README.md`):
 
 ```bash
 git submodule update --init --checkout ksat-extra

@@ -172,13 +172,11 @@ learned clause regardless of glue.
 
 #where[
   CaDiCaL: `reduce.cpp` (`reducing`, `mark_useless_redundant_clauses_as_garbage`, `reduce`),
-  `options.hpp` (`reduceint` 300, `reducetarget` 75) · ksat port: `CaDiCaL.kt` `reduce()`.
-  The port follows its shadow reference `ksat-extra/shadow/cadical-c/cadical_trace.cc`, which
-  differs from upstream 2.1.3 here: no `keep` flag, a kissat-style used test (glue $<= 2$ kept
-  only while `used` $> 0$, glue $<= 6$ kept while `used` $>= 1$; a use sets `used` to 2, a new
-  learned clause starts at 1), and the next reduce after $25 dot sqrt("conflicts")$ conflicts
-  (constant `OPT_reduceint = 25` in the reference). The glue/size ranking and the 75% target are
-  as upstream.
+  `options.hpp` (`reduceint` 300, `reducetarget` 75) · ksat port: `full/Reduce.kt`, a 1:1
+  translation of `reduce.cpp`. (The old core port, removed 2026-10-22, followed its
+  hand-written reference `cadical_trace.cc` instead, which differed from upstream here: no
+  `keep` flag, a kissat-style used test and the next reduce after $25 dot sqrt("conflicts")$
+  conflicts.)
 ]
 
 == Dynamic tiers and reduce in kissat

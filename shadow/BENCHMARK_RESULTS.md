@@ -32,6 +32,8 @@ Control (rules out an un-optimized build): the DEBUG native binary solves php_9_
 - CaDiCaL: the Kotlin CaDiCaL port solved php_9_8 in ~7.0 s (JVM), much slower than Kotlin MiniSat
   on the same instance. A fair Kotlin-CaDiCaL-vs-C-CaDiCaL ratio was NOT measured — the C
   `cadical_trace.cc` did not link standalone here (missing symbols), so no C baseline was taken.
-  Do not read the 7 s as a port-quality number without the C baseline.
+  Do not read the 7 s as a port-quality number without the C baseline. (Historical: that was the
+  old core port, removed 2026-10-22; `tools/benchmark_cadical.sh` now times the full port against
+  the upstream build in `cadical-full/`.)
 - Kotlin timings are solve-only; C includes parse+exit. For these instances parse is negligible,
   so the comparison is order-of-magnitude fair, slightly favouring C by its tiny parse overhead.
