@@ -30,7 +30,7 @@ fi
 echo "Device: $SERIAL"
 # Pin install to the chosen serial (adb/Gradle honor ANDROID_SERIAL) so install and launch
 # target the same device.
-ANDROID_SERIAL="$SERIAL" ./gradlew :demo:installDebug
+ANDROID_SERIAL="$SERIAL" ./gradlew :androidApp:installDebug
 # am start prints "Error:" on stdout but exits 0, so check its output explicitly.
 START_OUT="$("$ADB" -s "$SERIAL" shell am start -n org.bytefred.ksat.demo/.MainActivity 2>&1)"
 echo "$START_OUT"

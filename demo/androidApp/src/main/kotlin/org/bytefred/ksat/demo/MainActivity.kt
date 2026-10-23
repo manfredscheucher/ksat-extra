@@ -6,7 +6,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 
 // Android entry point: a single Activity that shows the same demo report in a TextView.
-// Build/install:  ./gradlew :demo:installDebug   then launch "ksat demo".
+// Build/install:  ./gradlew :androidApp:installDebug   then launch "ksat demo".
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

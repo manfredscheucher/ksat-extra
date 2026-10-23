@@ -2,7 +2,9 @@
 
 One tiny SAT demo, compiled to **every** Kotlin Multiplatform target, to show that the
 `ksat` solver is pure Kotlin common code that runs everywhere. The shared logic is in
-`src/commonMain/.../XorDemo.kt`; each target has only a thin entry point.
+`src/commonMain/.../XorDemo.kt`; each target has only a thin entry point. The Android app
+(MainActivity) is the separate `:androidApp` module in `androidApp/`, because AGP 9 does not
+allow an Android application inside a Kotlin Multiplatform module.
 
 ## What it does
 
@@ -39,7 +41,7 @@ cd ksat-extra
 ./gradlew :demo:runReleaseExecutableMingwX64    # Windows native console (on Windows)
 ./gradlew :demo:runDebugExecutableMacosArm64    # macOS native console (Apple Silicon)
 ./gradlew :demo:runDebugExecutableMacosX64      # macOS native console (Intel)
-./gradlew :demo:installDebug                     # Android app "ksat demo"
+./gradlew :androidApp:installDebug              # Android app "ksat demo" (demo/androidApp/)
 ```
 
 iOS builds as a framework (`:demo:linkDebugFrameworkIosSimulatorArm64`); call

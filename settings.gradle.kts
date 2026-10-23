@@ -50,3 +50,6 @@ include(":ksat")
 project(":ksat").projectDir = file("../ksat")
 
 include(":demo")
+// The Android app (AGP 9: application module separate from the KMP :demo module).
+include(":androidApp")
+project(":androidApp").projectDir = file("demo/androidApp")
