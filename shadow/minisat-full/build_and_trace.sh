@@ -72,7 +72,7 @@ build_it () {
 is_stale () {
   [ -x "$bin" ] || return 0
   local f
-  for f in "$patchfile" "$here/driver.cpp" "$shim/zlib.h" "$0"; do
+  for f in "$patchfile" "$here/driver.cpp" "$here/driver_script.h" "$shim/zlib.h" "$0"; do
     [ "$f" -nt "$bin" ] && return 0
   done
   return 1

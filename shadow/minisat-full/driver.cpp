@@ -2,6 +2,14 @@
 //
 //   minisat_full_trace [--simp=0|1] [--<option>=<value> ...] <file.cnf> [<file.assume>]
 //
+// --strict=1: parse_DIMACS(in, S, true) (upstream Main.cc -strict): prints "PARSE ERROR! DIMACS
+// header mismatch: wrong number of clauses" to stdout when the clause count differs from the
+// header and goes on. Default 0 (as upstream). Malformed input: upstream's parser prints
+// "PARSE ERROR! Unexpected char: <c>" (stdout from parse_DIMACS_main, stderr from parseInt) and
+// exits with 3.
+//
+// --script=<file.ops>: incremental script mode instead of a CNF, see driver_script.h.
+//
 // --simp=0 (default): core Minisat::Solver.  --simp=1: Minisat::SimpSolver, run like
 // upstream simp/Main.cc: parse, eliminate(true), stop with UNSAT if !okay(), else
 // solveLimited(assumptions).
@@ -56,6 +64,8 @@ static void die(const char* fmt, ...) {
     exit(1);
 }
 
+#include "driver_script.h"   // --script mode (incremental)
+
 static const char* const bool_options[] = { "luby", "rnd-init", "elim", "asymm", "rcheck", NULL };
 
 static bool is_bool_option(const std::string& name) {
@@ -64,11 +74,13 @@ static bool is_bool_option(const std::string& name) {
     return false;
 }
 
+static bool strict_parse = false;   // --strict=1: parse_DIMACS(in, S, true) (upstream -strict)
+
 template<class S>
 static void read_cnf(S& solver, const char* path) {
     FILE* in = fopen(path, "rb");
     if (in == NULL) die("cannot open CNF file '%s'", path);
-    parse_DIMACS(in, solver, false);
+    parse_DIMACS(in, solver, strict_parse);
     if (ferror(in)) die("read error on '%s'", path);
     fclose(in);
 }
@@ -114,6 +126,7 @@ static int finish(const Solver& solver, lbool ret) {
 
 int main(int argc, char** argv) {
     int simp = 0;
+    std::string script;   // --script=<file.ops>: incremental script mode (driver_script.h)
     std::vector<std::string> upstream_args;
     std::vector<const char*> files;
     upstream_args.push_back(argv[0]);
@@ -125,7 +138,14 @@ int main(int argc, char** argv) {
             if (eq == NULL || eq == a + 2) die("option '%s' must have the form --<name>=<value>", a);
             std::string name(a + 2, eq);
             std::string value(eq + 1);
-            if (name == "simp") {
+            if (name == "script") {
+                if (value.empty()) die("--script needs a file");
+                script = value;
+            } else if (name == "strict") {
+                if (value == "0") strict_parse = false;
+                else if (value == "1") strict_parse = true;
+                else die("--strict must be 0 or 1, got '%s'", value.c_str());
+            } else if (name == "simp") {
                 if (value == "0") simp = 0;
                 else if (value == "1") simp = 1;
                 else die("--simp must be 0 or 1, got '%s'", value.c_str());
@@ -148,8 +168,9 @@ int main(int argc, char** argv) {
             files.push_back(a);
         }
     }
-    if (files.size() < 1 || files.size() > 2)
-        die("usage: %s [--simp=0|1] [--<option>=<value> ...] <file.cnf> [<file.assume>]", argv[0]);
+    if (!script.empty() && !files.empty()) die("--script takes no CNF / assumptions file");
+    if (script.empty() && (files.size() < 1 || files.size() > 2))
+        die("usage: %s [--simp=0|1] [--strict=0|1] [--<option>=<value> ...] <file.cnf> [<file.assume>]  |  [--simp=0|1] [--<option>=<value> ...] --script=<file.ops>", argv[0]);
 
     // Upstream option parser, strict: an unknown or malformed flag exits(1) with
     // "ERROR! Unknown flag ...", an out-of-range value exits(1) as well.
@@ -159,6 +180,15 @@ int main(int argc, char** argv) {
     int uargc = (int)upstream_args.size();
     parseOptions(uargc, &uargv[0], true);
     if (uargc != 1) die("option '%s' was not consumed by the upstream option parser", uargv[1]);
+
+    if (!script.empty()) {
+        if (simp == 0) {
+            Solver S;
+            return run_script(S, NULL, script.c_str());
+        }
+        SimpSolver S;
+        return run_script(S, &S, script.c_str());
+    }
 
     vec<Lit> assumps;
     if (simp == 0) {

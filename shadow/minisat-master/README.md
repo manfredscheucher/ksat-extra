@@ -49,11 +49,13 @@ only).
 
 ## Driver
 
-    build/minisat_master_trace [--simp=0|1] [--drup=0|1|devnull] [--show-info=0|1]
+    build/minisat_master_trace [--simp=0|1] [--drup=0|1|devnull] [--show-info=0|1] [--strict=0|1]
                                [--<option>=<value> ...] <file.cnf> [<file.assume>]
+    build/minisat_master_trace [--simp=0|1] [--show-info=0|1] [--<option>=<value> ...] --script=<file.ops>
 
 Everything of `../minisat-full/README.md` ("Driver") holds; `--rdb-at=k` is an ordinary upstream
-core option. New:
+core option, and so do `--strict` and the incremental `--script` mode (shared code:
+`../minisat-full/driver_script.h`; `--script` refuses `--drup`). New:
 
 - `--drup=1`: `drup_file = stdout`, as master's `simp/Main.cc -drup`. The proof is the only thing
   on stdout (LSTRACE must be unset, the verdict goes to stderr, Main.cc's `c DRUP proof

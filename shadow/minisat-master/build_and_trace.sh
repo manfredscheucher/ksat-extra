@@ -101,7 +101,7 @@ is_stale () {
   local f b
   for b in "$bin" "$bin_ascii" "$bin_raw" "$bin_raw_ascii"; do
     [ -x "$b" ] || return 0
-    for f in "$patchfile" "$asciipatch" "$fixespatch" "$here/driver.cpp" "$shim/zlib.h" "$0"; do
+    for f in "$patchfile" "$asciipatch" "$fixespatch" "$here/driver.cpp" "$shadow/minisat-full/driver_script.h" "$shim/zlib.h" "$0"; do
       [ "$f" -nt "$b" ] && return 0
     done
   done

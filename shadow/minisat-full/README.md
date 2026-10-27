@@ -11,6 +11,7 @@ upstream solver, unmodified, plus trace prints.
 | `trace.patch` | unified diff applied to a copy of `upstream/minisat`; only adds output (no removed lines) |
 | `zlib-shim/zlib.h` | replaces `<zlib.h>`: `gzFile` = `FILE*`, `gzread` = `fread` (no zlib needed) |
 | `driver.cpp` | small `main`: options, upstream DIMACS parser, `Solver` or `SimpSolver`, verdict |
+| `driver_script.h` | the drivers' incremental `--script` mode (also included by `../minisat-master/driver.cpp`) |
 | `build_and_trace.sh` | builds `build/minisat_full_trace`; prints one trace, or a determinism summary |
 | `build/` | build directory (gitignored via `**/build/`) |
 
@@ -62,7 +63,8 @@ zlib. The driver checks `ferror` after parsing (the shim maps a read error to en
 
 ## Driver
 
-    build/minisat_full_trace [--simp=0|1] [--<option>=<value> ...] <file.cnf> [<file.assume>]
+    build/minisat_full_trace [--simp=0|1] [--strict=0|1] [--<option>=<value> ...] <file.cnf> [<file.assume>]
+    build/minisat_full_trace [--simp=0|1] [--<option>=<value> ...] --script=<file.ops>
 
 - `--simp=0` (default): `Minisat::Solver`. `parse_DIMACS`, read assumptions,
   `solveLimited(assumptions)`.
@@ -88,6 +90,19 @@ zlib. The driver checks `ferror` after parsing (the shim maps a read error to en
   `MODEL l1 ... ln 0` (with `LSTRACE`; `model[i] == l_True ? i+1 : -(i+1)`, `i < nVars()`,
   an undefined model value is an error), then always `s SATISFIABLE` / `s UNSATISFIABLE` /
   `s UNKNOWN`. Exit code 10 / 20 / 0, 1 on any error.
+- `--strict=1`: `parse_DIMACS(in, S, true)` (upstream Main.cc `-strict`): prints `PARSE ERROR!
+  DIMACS header mismatch: wrong number of clauses` to stdout when the clause count differs from the
+  header, and goes on (upstream does not exit). Malformed input: upstream's parser prints
+  `PARSE ERROR! Unexpected char: <c>` (stdout from `parse_DIMACS_main`, stderr from `parseInt`)
+  and exits with 3. Kotlin mirror: `parseDimacs` (port, `Dimacs.kt`), checked by
+  `MiniSatDimacsLiveTest` on crafted inputs.
+- `--script=<file.ops>` (2026-10-27): incremental mode, instead of a CNF. The operations of the
+  file run in order on ONE solver (`add`, `assume`, `solve [simp=0|1] [turnoff=0|1]`, `release`,
+  `simplify`, `newvar`, `polarity`, `decision`, `budget conf=|prop=|off`, `interrupt`,
+  `clear-interrupt`, `freeze`, `eliminate`); every operation is echoed as `OP ...`, results as
+  `RET`, `VAR`, `MODEL` (undefined values as `?v`) and `FAILED` (the final conflict after UNSAT).
+  Format: `driver_script.h`. Scripts: `../minisat-scripts/` from `../tools/gen_minisat_scripts.py`;
+  Kotlin mirror `MiniSatShadowDriver.runScript`, test `MiniSatIncrementalShadowTest`.
 
 ## Trace vocabulary
 

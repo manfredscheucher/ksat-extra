@@ -308,3 +308,271 @@ the driver). Details: `shadow/minisat-master/README.md`.
 - Harness checks: dropping the rcheck fix made `substituteWithRcheckKeepsUnsatInBothOrders` and 30
   master live runs fail; (2026-10-23) forcing the csb order with a proof made 78 proof and 94 trace
   runs fail. Both reverted.
+
+## Coverage audit (2026-10-27)
+
+Fresh, independent audit (auditor did not write the port), asked by Manfred 2026-10-23 before a
+`copy()` extension: which MiniSat is ported, does the Kotlin port cover everything of the
+original / meelgroup, what is new. Read-only on code. Sources: `~/github/minisat-meelgroup`
+(`origin/master` 664490d, `origin/csb` 9a0382d, `origin/crystalball` 96ce818, niklasso 37dc6c6).
+Kotlin paths below are relative to `solver/minisat/minisat-kotlin/src/commonMain/kotlin/org/bytefred/ksat/minisat/`;
+`M` = `MiniSat.kt`, `S` = `MiniSatSimp.kt`, `T` = `SolverTypes.kt`, `X` = `Mtl.kt`.
+
+**Verdict: COMPLETE-EXCEPT** the deliberately unported, non-algorithmic parts listed below
+(printing/CLI/OS/file I/O, iterators, DIMACS parser replaced). Every function, struct and option of
+`core/Solver.*`, `core/SolverTypes.h`, `simp/SimpSolver.*` and the `mtl` headers the solver uses is
+ported; no algorithmic member is missing.
+
+### Ported target
+
+meelgroup `master` 664490d (= niklasso 37dc6c6 + 4565536 + a352df4 clang-format + DRUP/rdb-at
+commits) with 4 bug fixes; `csbCompat = true` = meelgroup `csb` 9a0382d (= niklasso 37dc6c6 +
+compile fixes). Nothing of `crystalball`.
+
+### core/Solver.h + Solver.cc
+
+| Upstream | Kotlin | Status |
+|---|---|---|
+| `Solver()` ctor, all member defaults | `M:53`ff | ported |
+| `newVar(upol, dvar)` (free_vars reuse) | `newVar` / `solverNewVar` M:444/446 | ported |
+| `releaseVar(Lit)` | M:474/476 | ported |
+| `addClause(vec)`, `addEmptyClause`, `addClause(p[,q[,r[,s]]])`, `addClause_` | M:370-377, 484/486 | ported |
+| `simplify()` | M:1025 | ported |
+| `solve(assumps)`, `solve(p)`, `solve(p,q)`, `solve(p,q,r)`, `solveLimited(assumps)` | M:422-431 | ported |
+| `solve()` (no argument) | `solve(IntVec())`; the name is `SatSolver.solve()` | renamed (see note A) |
+| `okay`, `implies` | M:432, 1289 | ported |
+| `toDimacs(FILE*, assumps)`, private `toDimacs(FILE*, Clause&, map, max)`, `mapVar` | `toDimacs(Appendable[, assumps])` M:434/1339, private M:1329/1321 | ported (Appendable) |
+| `toDimacs(const char* file, ...)` 5 overloads | - | not ported (file I/O) |
+| `clausesBegin/End`, `trailBegin/End` (`ClauseIterator`, `TrailIterator`) | - | not ported (no public clause/trail iteration) |
+| `setPolarity`, `setDecisionVar` | M:402/403 | ported |
+| `value(Var/Lit)`, `modelValue(Var/Lit)` | `valueVar/valueLit/modelValue/modelValueLit` M:392-395 | ported |
+| `nAssigns/nClauses/nLearnts/nVars/nFreeVars` | M:396-401 | ported |
+| `printStats` | - | not ported (cpuTime/memUsedPeak, printing) |
+| `setConfBudget/setPropBudget/budgetOff/interrupt/clearInterrupt`, `withinBudget` | M:410-419 | ported (see note B) |
+| `garbageCollect` (virtual), `checkGarbage()`, `checkGarbage(gf)` | M:1434, 360/361 | ported |
+| `model`, `conflict` (LSet) | M:133/136 (`LitSet`) | ported |
+| options: `verbosity var_decay clause_decay random_var_freq random_seed luby_restart ccmin_mode phase_saving rnd_pol rnd_init_act garbage_frac min_learnts_lim restart_first restart_inc learntsize_factor learntsize_inc learntsize_adjust_start_confl learntsize_adjust_inc` | M:82-111, upstream defaults (checked against `opt_*`) | ported; ranges not checked (upstream checks them only in CLI parsing; direct member assignment is unchecked too) |
+| master: `drup_file`, `show_info`, `reduceDB_at_confl` (rdb-at), `reduceDB_call`, `reducedb_last_confl`, `add_oc`, `BIN_DRUP` buffer + `byteDRUP/binDRUP/binDRUP_strengthen/binDRUP_flush`, `reduceDB_needed` | M:63/85/102/128/129/176, 223-322, 1188 | ported (rdb-at range-checked, stricter than a member assignment upstream) |
+| statistics `solves starts decisions rnd_decisions propagations conflicts dec_vars num_clauses num_learnts clauses_literals learnts_literals max_literals tot_literals` | M:114-126 (read-only) | ported |
+| state `clauses learnts trail trail_lim assumptions activity assigns polarity user_pol decision vardata watches order_heap ok cla_inc var_inc qhead simpDB_assigns simpDB_props progress_estimate remove_satisfied next_var ca released_vars free_vars seen analyze_stack analyze_toclear add_tmp max_learnts learntsize_adjust_confl learntsize_adjust_cnt conflict_budget propagation_budget asynch_interrupt` | M:139-185 (`VarData` split in `vardataReason/vardataLevel`, `ShrinkStackElem` in `analyzeStackI/L`) | ported |
+| `Watcher`, `WatcherDeleted`, `VarOrderLt` | `WatchVec`/`Watches` T:253/284, M:155 | ported |
+| `insertVarOrder pickBranchLit newDecisionLevel uncheckedEnqueue enqueue propagate cancelUntil analyze analyzeFinal litRedundant search solve_ reduceDB (+ reduceDB_lt) removeSatisfied rebuildOrderHeap` | M:331, 611, 388, 841, 367, 854, 590, 647, 811, 745, 1080, 1234/1236, 929, 963, 1013 | ported |
+| `varDecayActivity varBumpActivity(x2) claDecayActivity claBumpActivity` | M:335-349 | ported |
+| `attachClause detachClause removeClause isRemoved locked satisfied decisionLevel abstractLevel reason level progressEstimate relocAll` | M:534, 544, 562/564, 383, 384, 582, 390, 391, 328, 329, 1195, 1385/1387 | ported |
+| static `drand`, `irand`, file-static `luby` | M:1454, 1462, 1217 | ported |
+
+### simp/SimpSolver.h + SimpSolver.cc
+
+| Upstream | Kotlin | Status |
+|---|---|---|
+| ctor (extra field, `bwdsub_tmpunit`, `remove_satisfied = false`), `newVar`, `releaseVar` | S:72, 187, 203 | ported |
+| `addClause` variants, `addEmptyClause` (inline, call the hidden `addClause_`) | inherited M:370-377 (dispatch to S:256) | ported |
+| `addClause_`, `removeClause`, `strengthenClause`, `merge` x2, `gatherTouchedClauses`, `implied`, `backwardSubsumptionCheck`, `asymm`, `asymmVar`, `mkElimClause` x2, `eliminateVar`, `substitute`, `extendModel`, `eliminate`, `relocAll`, `garbageCollect`, `updateElimHeap` | S:256, 294, 306, 339/371, 400, 425, 445, 529, 555, 582/587, 610, 715, 754, 775, 878, 903, 85 | ported |
+| `setFrozen`, `isEliminated`, `freezeVar`, `thaw` | S:93, 83, 99, 107 | ported |
+| `solve(assumps|p|p,q|p,q,r|-, do_simp, turn_off_simp)`, `solveLimited(assumps, do_simp, turn_off_simp)`, `solve_(do_simp, turn_off_simp)` | S:117-145, 214 | ported (no default args on the 2-flag overloads; the 1-arg overrides use `true, false`) |
+| options `grow clause_lim subsumption_lim simp_garbage_frac use_asymm use_rcheck use_elim extend_model`; master `parsing` | S:33-42, upstream defaults | ported |
+| stats `merges asymm_lits eliminated_vars` | S:45-47 | ported |
+| state `elimorder use_simplification max_simp_var elimclauses touched occurs n_occ elim_heap subsumption_queue frozen frozen_vars eliminated bwdsub_assigns n_touched bwdsub_tmpunit`, `ElimLt`, `ClauseDeleted` | S:50-69, `CRefOccLists` T:330 | ported |
+| `#if 0` toDimacs block | - | dead upstream |
+
+### core/SolverTypes.h, mtl/*, utils/*, Dimacs.h, Main.cc
+
+| Upstream | Kotlin | Status |
+|---|---|---|
+| `Lit`, `mkLit ~ ^ sign var toInt toLit`, `lit_Undef/lit_Error`, `var_Undef` | T:13-21 (Lit = Int, toInt/toLit identity) | ported |
+| `lbool` (incl. the `==` with undef bit), `l_True/l_False/l_Undef`, `toInt/toLbool` | T:26-34 (`lbEq`, `lbXor`, `lbOf`) | ported |
+| `Clause` (header bitfield, `size learnt has_extra mark reloced activity abstraction calcAbstraction shrink pop last subsumes strengthen`), `ClauseAllocator` (`alloc` x2, `free`, `reloc`, `moveTo`, `clauseWord32Size`, `extra_clause_field`) | T:52-250, word layout identical | ported |
+| `OccLists` (`init lookup cleanAll clean smudge clear`), `VMap LMap LSet MkIndexLit` | T:284/330, `IntVec`/`DoubleVec`/`LitSet` | ported |
+| `CMap` (+ mtl/Map.h) | - | unused by core/simp |
+| mtl/Vec.h, Alg.h (`remove`, `append`, `copyTo`), Sort.h, Heap.h, Queue.h, IntMap.h (`IntMap`, `IntSet`), Alloc.h | X:26, 113/122, 133-169, 174, 282, 108-110/326, T:52 | ported (Heap/Sort/Queue/Alloc re-read against master: identical) |
+| mtl/Rnd.h, XAlloc.h, IntTypes.h | - | Rnd.h unused by Solver; C memory/int typedefs |
+| utils/Options.* (Option classes, `parseOptions`, usage) | public vars | not ported (CLI) |
+| utils/System.* (`cpuTime memUsed memUsedPeak setX86FPUPrecision limitMemory limitTime sigTerm`) | - | not ported (OS) |
+| utils/ParseUtils.h, core/Dimacs.h `parse_DIMACS` | replaced by `org.bytefred.ksat.DimacsCnf.parse` (ksat-common) | REPLACED, not equivalent (note C); closed: ported (follow-up below) |
+| core/Main.cc, simp/Main.cc (`-verb -cpu-lim -mem-lim -strict -pre -solve -dimacs -drup -drup-file -show-info`, signal handlers, result printing, final proof line) | test `MiniSatShadowDriver` mirrors the parse / eliminate / solveLimited / proof-end flow | not ported (application) |
+
+Notes:
+
+- A. `SatSolver.solve()` on a `MiniSatSimp` is `solveLimited(assumps, do_simp = true, turn_off_simp = true)`
+  (plus the eliminated-variable checks), not upstream `SimpSolver::solve()` (`turn_off_simp = false`).
+  Documented in the facade decision; the upstream call is `solve(true, false)`.
+- B. (closed: `@Volatile`, follow-up below) `asynchInterrupt` is a plain `var` (M:185). Upstream's `bool` is not atomic either, but on the
+  JVM the JIT may hoist the read out of the search loop, so `interrupt()` from another thread is
+  not guaranteed to be seen. CaDiCaL's port uses `@Volatile` for its terminate flag.
+- C. (closed: parser ported, DimacsCnf fixed, follow-up below) `DimacsCnf.parse` vs `parse_DIMACS` (probe CNFs run on `minisat_master_trace`, Kotlin side by
+  code reading):
+
+  | Input | MiniSat | DimacsCnf |
+  |---|---|---|
+  | more clauses than the header `m` (`p cnf 1 1`, `1 0`, `-1 0`) | reads all: UNSAT | stops after `m`: drops `-1 0` silently (SAT) |
+  | last clause without `0` | PARSE ERROR, exit 3 | accepted |
+  | `1 2 0 c comment` (comment after a clause on the same line) | comment skipped | `NumberFormatException` |
+  | `p wcnf ...`, `p  cnf` (two spaces) | PARSE ERROR | accepted |
+  | SATLIB tail `%` / `0` after `m` clauses | PARSE ERROR | accepted |
+  | header variable count | ignored (vars created lazily) | kept in `numVars`, not used by the MiniSat adapter |
+
+  The live shadow CNFs are well-formed, so the tests are unaffected. For the facade it matters little,
+  but the first row is a silent clause drop.
+
+### Test claims checked
+
+| Claim | Check | Result |
+|---|---|---|
+| live shadow: simp=0/1, master default and csbCompat, assumptions, 8 option sets, 360 runs | read `MiniSatLiveShadowTest`: 30 cases (cnf 16 without php_10_9, cnf-full 10, cnf-assume 4) x (4 core sets + 8 simp sets) = 360; both references | confirmed |
+| master default verified | 2026-10-27 only in quick mode (first 20000 lines per run); full traces were compared for csb (2026-10-22) | gap, low |
+| option coverage | never varied: `var-decay`, `cla-decay`; no CLI upstream (so no shadow): `rnd_pol`, `learntsize_*`, `verbosity` | gap, low (one-line code) |
+| incremental use | every shadow run is one `solveLimited`; repeated solve, add-after-solve, release/reuse only behaviour-tested (`MiniSatApiTest`, facade tests) | gap, medium for `copy()`; closed: incremental shadow (follow-up below) |
+| bugs 1-4 reproduce on raw master, fixed build differs | raw binaries run: bug 1 exit 139 vs 20; bug 2 3616 vs 310 REDUCE; bug 3 2 bytes vs 93 (ASCII 24 lines); bug 4 SATISFIABLE vs UNSATISFIABLE on php_3_2 | confirmed |
+| `SimpSolver::relocAll` with non-empty queue (untested) | code compared with master line by line | identical |
+
+Gradle tests were not run in this audit (cold Gradle start exceeds the short-timeout rule).
+
+### Diffs
+
+| Range | Commits (minisat/ only) | Content | In the port |
+|---|---|---|---|
+| niklasso 37dc6c6 -> csb 9a0382d | c554273 4d9462e 3db5894 26b58cf a98e44f dbef978 4c8afcd (+ CMake/CI commits) | 16 lines in 5 files: friend default arg, `PRIu64` spacing, `memUsedPeak` signature, `__GLIBC__` FPU guard | n/a (no behaviour); `csbCompat = true` |
+| 37dc6c6 -> master 664490d | 4565536 (compile fix), a352df4 (clang-format, token-identical), 1d1940a DRUP, 9e03655 `parsing`, 333d3ef eliminateVar/substitute order, 6b0d7ff trim proof lines, b1f6f7f show_info, a19dbf7 rdb-at, 664490d CMake | proofs, rdb-at, show_info counters, elimination order | all; show_info printing not ported |
+| master -> crystalball 96ce818 | 94 commits from merge base a19dbf7 (eb49954 SQLite .. 96ce818) | SQLite clause statistics, clause IDs in DRAT, ML clause deletion `reduceDB_ml` (`pred-rdb`, json model), glucose restarts (`glu-rst`), ML restarts (`pred-rst`), locked-clause counting in reduceDB, drup_debug prints, scripts | nothing (research branch) |
+
+Upstream bugs (verified against the source): 1 `if (trimmed)` without `drup_file &&` (master
+Solver.cc removeSatisfied; crystalball fixed it as `drup_file && trimmed && !empty_on_trimming`);
+2 `reducedb_last_confl = conflicts` only inside `if (show_info == 1)` (crystalball fixed it
+differently: `last_conflicts = conflicts` after every reduceDB in search, same semantics as the
+port's fix); 3 `binDRUP_flush` protected and never called in simp/Main.cc (still so in crystalball);
+4 resolvents added through `addClause_` with `use_rcheck` while their antecedents are still in the
+database, so `implied()` is always true (still so in crystalball).
+
+### State a `copy()` of the core solver must handle
+
+| Area | State | Pitfall |
+|---|---|---|
+| clause memory | `ca` (`memory`, `sz`, `cap`, `wasted`, `extraClauseField`), `clauses`, `learnts` | CRefs are word offsets; a copy either clones the array (same CRefs) or relocates (like `garbageCollect`), and then every CRef holder must be remapped |
+| CRef holders | `watches` (cref+blocker pairs, `dirty`/`dirties`), `vardataReason`, Simp `occurs` (+ dirty), `subsumptionQueue`, `bwdsubTmpunit` | all private in `Watches`/`CRefOccLists`/`IntQueue`; needs copy methods in T/X |
+| assignment | `assigns`, `trail`, `trailLim`, `qhead`, `vardataLevel` | level-0 units are only on the trail, not clauses: a replay copy must add them |
+| heuristics | `activity`, `orderHeap` (heap + indices; history-dependent order), `polarity`, `userPol`, `decision` + `decVars`, `varInc`, `claInc`, clause activities in `ca` | rebuilding the heap changes the decision order |
+| variables | `nextVar`, `releasedVars` (still on the trail until `simplify`), `freeVars` (reused by `newVar`) | a replay copy must keep variable numbering |
+| limits | `maxLearnts`, `learntsizeAdjustConfl/Cnt`, `simpDBAssigns/Props`, `progressEstimate`, `removeSatisfied`, `ok` | `ok = false` copy |
+| budgets | `conflictBudget`/`propagationBudget` are absolute (`conflicts + x`), `asynchInterrupt` | copying budgets without stats changes their meaning |
+| options | all public vars, incl. `randomSeed`, which is also the RNG state mutated by `drand` | copy the current seed, not the default |
+| results | `model`, `conflict` (`LitSet`), `assumptions` | Copying contract (CaDiCaL): no assumptions |
+| proof | `drupFile` sink, `binDrup`, `drupBuf`/`bufLen` pending bytes, `reduceDBCall`, `reducedbLastConfl`, `showInfo`, `csbCompat` | sharing one sink interleaves two proofs; pending bytes belong to the original |
+| temporaries | `seen`, `analyzeStack*`, `analyzeToclear`, `addTmp`, `addOc` | sizes only (`seen` must be sized to nVars) |
+| SimpSolver | `elimclauses`, `eliminated`, `frozen`, `frozenVars`, `touched`, `nOcc`, `elimHeap`, `useSimplification`, `maxSimpVar`, `elimorder`, `nTouched`, `bwdsubAssigns`, `parsing`, options, stats | after elimination the clauses are only equisatisfiable; `elimclauses` is needed for `extendModel` |
+| other | trace sink (`setTraceSink`), `MiniSatSimp` must copy to `MiniSatSimp` | |
+
+## Coverage audit follow-up (2026-10-27)
+
+Closes the audit's gaps B, C and "incremental use". Port stays 1:1 (master 664490d + bugs 1-4;
+csb with `csbCompat`); no divergence between port and references was found, so the port's solver
+code is unchanged except for `@Volatile`.
+
+### What was done
+
+1. **`asynchInterrupt` `@Volatile`** (MiniSat.kt). Correction to the request: upstream's member is
+   a plain `bool asynch_interrupt` (master Solver.h:293, also csb, niklasso 37dc6c6, crystalball), not
+   `volatile`. `@Volatile` is a port addition, marked as such in the code: no effect single-threaded
+   (traces unchanged), but without it the JIT may hoist the read in `withinBudget()` out of the search
+   loop and never see an `interrupt()` from another thread (upstream documents interrupt() as
+   "potentially asynchronous"; the CaDiCaL port does the same for its terminate flag).
+   Test: `MiniSatInterruptTest` (core and simp: interrupt from a second thread stops a PHP(13,12)
+   solve with l_Undef; clearInterrupt + budgeted solve afterwards).
+2. **core/Dimacs.h + utils/ParseUtils.h ported** (`Dimacs.kt`, `ParseUtils.kt` in the port):
+   `parseDimacs(input: ByteArray | String, solver, strictp = false, out = println)` = `parse_DIMACS`
+   / `parse_DIMACS_main` / `readClause`, and `StreamBuffer`, `isEof`, `skipWhitespace`, `skipLine`,
+   `parseInt`, `eagerMatch` (not ported, unused by Dimacs.h: `StreamBuffer::position`,
+   `isEof(const char*)`, `match`). Adaptations: in-memory bytes instead of a gzFile;
+   `printf/fprintf("PARSE ERROR! Unexpected char: %c\n"), exit(3)` -> `DimacsParseError` with the
+   same message (`toStderr` says whether upstream printed it to stderr (`parseInt`) or stdout
+   (`parse_DIMACS_main`); `%c` of EOF is the byte 0xFF, here `'ÿ'`); strict mode's header
+   mismatch is only printed upstream (no exit), so it goes to the `out` sink and parsing goes on.
+   `MiniSatShadowDriver.run` now reads CNFs with it (instead of `DimacsCnf`), so Kotlin reads them
+   exactly like the C driver. Both drivers got `--strict=0|1` (default 0, as upstream).
+   Tests: `MiniSatDimacsLiveTest` (30 crafted inputs: the audit's six cases plus header variants,
+   comments, CR LF, `\v \f`, no header, header after clauses, `+1`, `-0`, empty clause/input,
+   non-ASCII byte, `12x`, `1-2`, ...; `--simp=0/1` x `--strict=0/1`, master and csb: complete
+   stdout incl. `PARSE ERROR!` lines and `s ...`, exit code (3 on error) and the stderr line
+   compared live), `MiniSatDimacsTest` (commonTest, the outcomes without the reference).
+3. **ksat-common `DimacsCnf` fixed** (bug K1 below). New semantics, picked by the rule "what both
+   upstream default parsers agree on; where they disagree the more permissive reading that loses
+   nothing": MiniSat `parse_DIMACS` non-strict (its default) and CaDiCaL `read_dimacs` strict = 1
+   (its API and app default, `cadical.hpp`), both run on the inputs below
+   (`scripts/probe/probe_dimacs_upstreams.py`, main repo):
+
+   | Input | MiniSat | CaDiCaL | DimacsCnf (new) |
+   |---|---|---|---|
+   | more clauses than the header | reads all | "too many clauses" | reads all |
+   | fewer clauses than the header (also `p cnf 1 1` and nothing) | accepted | "clause missing" | accepted |
+   | last clause without `0` | PARSE ERROR | "last clause without terminating '0'" | rejected |
+   | `p wcnf` | PARSE ERROR | "expected 'c' after 'p '" | rejected |
+   | `p  cnf`, `p<tab>cnf` | PARSE ERROR | accepted | accepted |
+   | `p cnf3 1` | accepted | "expected space after 'p cnf'" | accepted |
+   | `p cnf 3 1 x` | PARSE ERROR | "expected new-line" | rejected |
+   | `p cnf 0 0` at EOF without newline | accepted | "expected new-line" | accepted |
+   | `p cnf 3` then a line `1 0` | header 3 1, then the empty clause `0`: UNSAT | "expected new-line after 'p cnf 3 1'" | rejected (CaDiCaL's reading: header numbers must be on the header line; MiniSat's reading would silently turn the unit `1` into the clause count) |
+   | `p cnf -1 1` | accepted (counts unused) | "expected digit" | accepted, negative count = 0 |
+   | `%` tail | PARSE ERROR | "expected digit or '-'" | rejected |
+   | `1 2 0 c comment` | accepted | accepted | accepted |
+   | `1 c comment` / `2c x` inside a clause | PARSE ERROR | accepted | accepted (comment to end of line) |
+   | no header, empty input | accepted | "expected 'c' or 'p'" | accepted |
+   | header after clauses, two headers | accepted | "expected digit or '-'" | accepted, `numVars` = the largest |
+   | literal beyond the header's variable count | accepted | "literal 5 exceeds maximum variable 1" | accepted, `numVars` covers it |
+   | `+1` | accepted | "expected digit or '-'" | accepted |
+   | `-0` | end of clause | end of clause | end of clause |
+   | `\v`, `\f` as whitespace | accepted | "expected digit or '-'" | accepted (MiniSat's 9..13, 32) |
+   | `1 - 2`, `12x` | PARSE ERROR | "expected digit after '-'", "expected white space" | rejected |
+   | `1-2` | 1 and -2 | "expected white space after '1'" | 1 and -2 |
+   | `99999999999` | int wraps silently (newVar loops ~1e9 times) | "literal too large" | rejected (a wrapped number is a different literal) |
+
+   Errors: `DimacsParseException(line, reason)` (an `IllegalArgumentException`, message `DIMACS parse
+   error at line N: ...`). `numVars` = max(header variable counts, largest variable in a clause).
+   Note: microSAT's C `parse` reads exactly the header's `m` clauses and sizes its arrays from the
+   header; the old DimacsCnf mirrored that (its KDoc said so). The shadow CNFs are well-formed, so
+   no shadow test changes. Tests: `DimacsCnfTest` (ksat-common commonTest, 8 tests).
+4. **Incremental shadow.** Both C drivers got `--script=<file.ops>` (shared code
+   `shadow/minisat-full/driver_script.h`): one solver, operations in order: `add`, `assume`, `solve
+   [simp=0|1] [turnoff=0|1]` (`solveLimited`; SimpSolver: do_simp / turn_off_simp), `release`
+   (`releaseVar`), `simplify`, `newvar [pol=t|f|u] [dvar=0|1]` (results referenced as `@k`, so a
+   variable reused from `free_vars` can be addressed), `polarity`, `decision`, `budget
+   conf=<n>|prop=<n>|off`, `interrupt`, `clear-interrupt`, `freeze`, `eliminate [turnoff=0|1]`. Output
+   per operation `OP ...`, `RET ...`, `VAR <v>`, after each solve `MODEL ... 0` (undefined as `?v`) or
+   `FAILED ... 0` (`conflict` in its order), interleaved with the trace. For `--simp=1` every call
+   goes to the SimpSolver member (a C++ user holding a `SimpSolver`). Kotlin mirror:
+   `MiniSatShadowDriver.runScript`. Generator: `shadow/tools/gen_minisat_scripts.py` (seeded,
+   byte-identical on re-run) -> `shadow/minisat-scripts/`, 22 scripts as 41 files (`.core.ops` for
+   `--simp=0`, `.simp.ops` for `--simp=1`; the simp variant freezes every variable referenced after
+   the first solve and every `newvar`, as SimpSolver's contract requires): add_after_solve,
+   changing_assumptions, failed_cores (PHP(5,4) with selectors), failed_units, release_reuse (reuse
+   via free_vars: `VAR 22`, `VAR 21` again in the core run), conf_budget (PHP(7,6), budgets 5 0 20 200
+   1000 -> UNKNOWN, then UNSAT), prop_budget, interrupt, polarity_decision, simp_frozen (do_simp,
+   simp=0, turnoff=1, adds on frozen vars), simp_eliminate, simp_newvar, random_00 .. random_09 (mixed
+   ops). Test: `MiniSatIncrementalShadowTest`, every script x 3 option sets (core runs skip the simp
+   option set): 104 runs per reference, complete output compared (no quick limit), master default
+   and csbCompat. Results: 0 divergences, nothing to fix.
+
+### Verification (2026-10-27)
+
+- `MiniSatIncrementalShadowTest`: master 104 runs (337,151 lines), csb 104 runs (388,875 lines),
+  0 failing.
+- `MiniSatDimacsLiveTest`: 120 runs per reference, 0 failing.
+- `MiniSatLiveShadowTest` (now parsing with `parseDimacs`): 360 + 360 runs (quick), 0 failing;
+  `MiniSatDrupTest`: proofs 310 runs / 282,412,986 bytes, traces 319 runs, bugs 1-4, 0 failing
+  (drat-trim check skipped: `DRAT_TRIM` not set); `MiniSatApiTest` 15, `MiniSatSanityTest` 6,
+  `MiniSatDimacsTest` 3, `MiniSatInterruptTest` 1 green. Whole `:minisat:jvmTest`: 38 tests, 4
+  skipped (golden-file suites without golden traces, drat-trim), 0 failing.
+- ksat-common `DimacsCnfTest` 8; `:microsat:jvmTest` (ShadowTraceTest 5, golden suites skipped),
+  `KissatSanityTest` 6, `CaDiCaLSanityTest` 6, facade `org.bytefred.ksat.facade.*` 65: green.
+- Harness checks (reverted): dropping `releasedVars.push` in `releaseVar` made 2 (csb) / 3 (master)
+  script runs fail; making the strict check `cnt != clauses + 1` made 34 Dimacs runs fail per
+  reference.
+
+### Bug list additions
+
+| # | Bug | Where | Repro | Fix |
+|---|---|---|---|---|
+| K1 | `DimacsCnf.parse` (ksat-common, shared by all solvers' tests/benchmarks) stopped after the header's clause count and silently dropped the rest, which can turn UNSAT into SAT; it also accepted a last clause without `0`, `p wcnf`, a `%` tail (as literals), and threw a bare `NumberFormatException` on `1 2 0 c comment` and `IndexOutOfBounds` on a short header | ksat-common `DimacsCnf.kt` (up to 9db30cc) | `DimacsCnf.parse("p cnf 1 1\n1 0\n-1 0\n").clauses.size` == 1 (formula SAT instead of UNSAT) | new parser (item 3 above), `DimacsCnfTest` |
+
+No new upstream bugs. Upstream oddities seen and kept 1:1 in the parser port (not changed, no
+failure of the solver itself): `parseInt` wraps on overflow (C signed overflow, UB), so a huge literal
+becomes a different variable (or newVar runs ~1e9 times); strict mode reports a header mismatch but
+does not stop; `p  cnf` (two blanks) is rejected.
