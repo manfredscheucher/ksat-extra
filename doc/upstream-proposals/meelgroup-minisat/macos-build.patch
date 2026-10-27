@@ -1,0 +1,31 @@
+diff --git a/minisat/utils/System.cc b/minisat/utils/System.cc
+index 9dbceab..e50db0f 100644
+--- a/minisat/utils/System.cc
++++ b/minisat/utils/System.cc
+@@ -85,7 +85,7 @@ double Minisat::memUsed()
+     getrusage(RUSAGE_SELF, &ru);
+     return (double)ru.ru_maxrss / 1024;
+ }
+-double Minisat::memUsedPeak()
++double Minisat::memUsedPeak(bool)
+ {
+     return memUsed();
+ }
+@@ -99,7 +99,7 @@ double Minisat::memUsed()
+     malloc_zone_statistics(NULL, &t);
+     return (double)t.max_size_in_use / (1024 * 1024);
+ }
+-double Minisat::memUsedPeak()
++double Minisat::memUsedPeak(bool)
+ {
+     return memUsed();
+ }
+@@ -109,7 +109,7 @@ double Minisat::memUsed()
+ {
+     return 0;
+ }
+-double Minisat::memUsedPeak()
++double Minisat::memUsedPeak(bool)
+ {
+     return 0;
+ }

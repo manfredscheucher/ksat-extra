@@ -1,0 +1,33 @@
+diff --git a/minisat/core/Solver.h b/minisat/core/Solver.h
+index 0aa2047..6c89570 100644
+--- a/minisat/core/Solver.h
++++ b/minisat/core/Solver.h
+@@ -392,6 +392,7 @@ class Solver
+             binDRUP_flush(drup_file);
+     }
+ 
++  public:
+     static inline void binDRUP_flush(FILE* drup_file)
+     {
+         //        fwrite(drup_buf, sizeof(unsigned char), buf_len, drup_file);
+@@ -399,6 +400,8 @@ class Solver
+         buf_ptr = drup_buf;
+         buf_len = 0;
+     }
++
++  protected:
+ #endif
+ 
+     // Static helpers:
+diff --git a/minisat/simp/Main.cc b/minisat/simp/Main.cc
+index 194f3a2..1f20bd9 100644
+--- a/minisat/simp/Main.cc
++++ b/minisat/simp/Main.cc
+@@ -179,6 +179,7 @@ int main(int argc, char** argv)
+             printf("UNSATISFIABLE\n");
+             if (S.drup_file) {
+ #ifdef BIN_DRUP
++                S.binDRUP_flush(S.drup_file);
+                 fputc('a', S.drup_file);
+                 fputc(0, S.drup_file);
+ #else
