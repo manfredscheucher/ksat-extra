@@ -1,0 +1,11 @@
+--- a/minisat/core/Solver.h
++++ b/minisat/core/Solver.h
+@@ -21,8 +21,6 @@
+ #ifndef Minisat_Solver_h
+ #define Minisat_Solver_h
+ 
+-#define BIN_DRUP
+-
+ #include "minisat/core/SolverTypes.h"
+ #include "minisat/mtl/Alg.h"
+ #include "minisat/mtl/Heap.h"

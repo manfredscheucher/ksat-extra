@@ -1,0 +1,53 @@
+--- a/minisat/core/Solver.cc
++++ b/minisat/core/Solver.cc
+@@ -699,8 +699,8 @@
+         reduceDB_call++;
+         // printf("c [reduceDB] #reduceDB_call | conflict | conflict_diff | restart | learnts_size | extra_lim | max_learnts ");
+         printf("c [reduceDB] %lu | %lu | %lu |  %lu | %d | %.2e | %.0f | %d \n", reduceDB_call, conflicts, (conflicts - reducedb_last_confl), starts, learnts.size(), extra_lim, max_learnts, i-j);
+-        reducedb_last_confl = conflicts;
+     }
++    reducedb_last_confl = conflicts; // FIX 2: maintained also with show_info == 0
+     learnts.shrink(i - j);
+     checkGarbage();
+ }
+@@ -733,7 +733,7 @@
+                     empty_on_trimming = true;
+             }
+             if (lstrace_size != c.size()) lstrace_clause(c.learnt() ? "TRIM learnt" : "TRIM orig", c); // LSTRACE
+-            if (trimmed){
++            if (trimmed && drup_file){ // FIX 1: no proof writes without a proof file
+ #ifdef BIN_DRUP
+                 binDRUP('a', c, drup_file);
+                 binDRUP('d', add_oc, drup_file);
+--- a/minisat/simp/SimpSolver.cc
++++ b/minisat/simp/SimpSolver.cc
+@@ -565,10 +565,15 @@
+ 
+     // Produce clauses in cross product:
+     vec<Lit>& resolvent = add_tmp;
++    bool fix_rcheck = use_rcheck; // FIX 4: no rcheck while the antecedents are still present
++    use_rcheck = false; // FIX 4
+     for (int i = 0; i < pos.size(); i++)
+         for (int j = 0; j < neg.size(); j++)
+-            if (merge(ca[pos[i]], ca[neg[j]], v, resolvent) && !addClause_(resolvent))
++            if (merge(ca[pos[i]], ca[neg[j]], v, resolvent) && !addClause_(resolvent)) {
++                use_rcheck = fix_rcheck; // FIX 4
+                 return false;
++            }
++    use_rcheck = fix_rcheck; // FIX 4
+ 
+     for (int i = 0; i < cls.size(); i++)
+         removeClause(cls[i]);
+@@ -609,7 +614,11 @@
+         }
+ 
+ 
+-        if (!addClause_(subst_clause))
++        bool fix_rcheck = use_rcheck; // FIX 4
++        use_rcheck = false; // FIX 4
++        bool fix_added = addClause_(subst_clause); // FIX 4
++        use_rcheck = fix_rcheck; // FIX 4
++        if (!fix_added) // FIX 4
+             return ok = false;
+ 
+         removeClause(cls[i]);
