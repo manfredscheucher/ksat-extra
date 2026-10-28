@@ -1,11 +1,11 @@
 # upstream/: verbatim MiniSat master (github.com/meelgroup/minisat, branch master, commit 664490d)
 
 Every file in this directory except this `README.md` is an unmodified export of the local clone
-`/Users/manfred/github/minisat-meelgroup`, branch `origin/master` at
+`/Users/manfred/github/meelgroup-minisat`, branch `upstream/master` at
 
 - commit `664490d5c49876a73bfd1a59fe5d5d5d530dd8bb` (2020-07-11, "fixing static build"),
 
-made with `git -C ~/github/minisat-meelgroup archive origin/master minisat LICENSE | tar -x`
+made with `git -C ~/github/meelgroup-minisat archive upstream/master minisat LICENSE | tar -x`
 (25 files: `minisat/{core,simp,mtl,utils}` and `LICENSE`). Never edit these files; trace
 output is added by `../trace.patch` on a copy in `../build/src-*`.
 

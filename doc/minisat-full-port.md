@@ -17,7 +17,11 @@ unmaintained (last commit 2013).
 
 ## Source choice: meelgroup/minisat 9a0382d
 
-- Local clone `~/github/minisat-meelgroup`, HEAD `9a0382d` (2026-03-14), clean.
+- Local clone `~/github/meelgroup-minisat`, HEAD `9a0382d` (2026-03-14), clean.
+- 2026-10-28: the clone is now Manfred's fork `~/github/meelgroup-minisat` (remote `upstream` =
+  meelgroup/minisat, so refs read `upstream/<branch>`); the earlier separate clone
+  `~/github/minisat-meelgroup` had the same commits. The fork carries the upstream fix branches
+  for bugs 1-4 (`fix-*`, see "Bug list") and the issue/PR drafts in its untracked `_private/`.
 - It contains niklasso's last commit `37dc6c6`. `git diff 37dc6c6 9a0382d` over
   `minisat/{core,simp,mtl,utils}` touches 16 lines in 5 files, all compile fixes:
   `mkLit` default argument moved from the friend declaration to the definition
@@ -202,7 +206,7 @@ So:
   and `substitute` (old clauses deleted after the new ones are added), with or without a proof.
 - Switch `MiniSat.csbCompat` (property, default `false`, also on `MiniSatSimp`): `true`
   reproduces csb 9a0382d exactly (verified against `shadow/minisat-full`). Audit of master vs
-  csb: `git diff a352df4 origin/master -- minisat` (a352df4 = csb token-wise, see "Source
+  csb: `git diff a352df4 upstream/master -- minisat` (a352df4 = csb token-wise, see "Source
   commits") has exactly one behaviour change without a proof and with rdb-at 0: the 333d3ef
   order. Everything else is proof output (only with a proof file), rdb-at (default 0: the old
   condition), show_info (state for rdb-at, printing), and the `verbosity && show_info != 1`
@@ -313,8 +317,8 @@ the driver). Details: `shadow/minisat-master/README.md`.
 
 Fresh, independent audit (auditor did not write the port), asked by Manfred 2026-10-23 before a
 `copy()` extension: which MiniSat is ported, does the Kotlin port cover everything of the
-original / meelgroup, what is new. Read-only on code. Sources: `~/github/minisat-meelgroup`
-(`origin/master` 664490d, `origin/csb` 9a0382d, `origin/crystalball` 96ce818, niklasso 37dc6c6).
+original / meelgroup, what is new. Read-only on code. Sources: `~/github/meelgroup-minisat`
+(`upstream/master` 664490d, `upstream/csb` 9a0382d, `upstream/crystalball` 96ce818, niklasso 37dc6c6).
 Kotlin paths below are relative to `solver/minisat/minisat-kotlin/src/commonMain/kotlin/org/bytefred/ksat/minisat/`;
 `M` = `MiniSat.kt`, `S` = `MiniSatSimp.kt`, `T` = `SolverTypes.kt`, `X` = `Mtl.kt`.
 

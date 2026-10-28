@@ -1,8 +1,8 @@
 # upstream/: verbatim MiniSat (github.com/meelgroup/minisat, commit 9a0382d)
 
 Every file in this directory except this `README.md` is an unmodified copy of the local
-clone `/Users/manfred/github/minisat-meelgroup` (the maintained fork of
-`niklasso/minisat`), at
+clone `/Users/manfred/github/meelgroup-minisat` (Manfred's fork of meelgroup/minisat, the
+maintained fork of `niklasso/minisat`; remote `upstream` = meelgroup), at
 
 - commit `9a0382dcb9e149dbd4d5c7fdf2b5e16ed70bfc8d` (2026-03-14, "skip macos-x86 [release]"),
   working tree clean (`git diff --quiet HEAD`, no untracked files).
