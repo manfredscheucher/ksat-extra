@@ -22,6 +22,9 @@ relative paths). Run the demo with a script from `scripts/`, e.g. `./scripts/run
 running on JVM, in the browser, on Android and on iOS. One-line run scripts per target in
 `scripts/`; see [`demo/README.md`](demo/README.md).
 
+Live in the browser (once GitHub Pages is enabled): https://manfredscheucher.github.io/ksat-extra/
+(`scripts/deployPages.sh` builds it into the `gh-pages` branch).
+
 <table>
   <tr>
     <td align="center" width="50%">

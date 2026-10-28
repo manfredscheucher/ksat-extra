@@ -28,3 +28,6 @@ shadow/**/*_bench
 shadow/minisat-c/include/
 
 __pycache__/
+
+# GitHub Pages worktree (scripts/deployPages.sh)
+.gh-pages/

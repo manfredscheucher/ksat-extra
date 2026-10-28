@@ -12,6 +12,8 @@ Prerequisite: `ksat-extra` must be checked out inside the `sat-solvers-kotlin` m
 | `runMacOS.sh` | native macOS console | macOS only; auto-picks arm64/x86_64 |
 | `runLinux.sh` | native Linux console | Linux only (incl. Windows WSL); x86_64 |
 | `runWeb.sh` | browser (Kotlin/JS) | blocking dev server; Ctrl-C to stop |
+| `buildWeb.sh` | static website (Kotlin/JS) | production bundle in `demo/build/dist/js/productionExecutable/` |
+| `deployPages.sh` | GitHub Pages | builds, commits the bundle to the local `gh-pages` branch (worktree `.gh-pages/`); no push |
 | `runAndroidEmulator.sh` | Android emulator | auto-picks the running `emulator-XXXX` |
 | `runAndroidDevice.sh` | attached Android device | auto-picks the connected non-emulator device |
 
