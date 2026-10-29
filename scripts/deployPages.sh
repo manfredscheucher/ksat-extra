@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Deploy the ksat demo website to GitHub Pages (branch gh-pages), WITHOUT pushing.
+# Deploy the website to GitHub Pages (branch gh-pages), WITHOUT pushing: the ksat
+# playground at the site root, the XOR demo under xor-demo/.
 #
-# Builds the production bundle, copies it into a git worktree of the gh-pages
+# Builds the site (scripts/buildWeb.sh), copies it into a git worktree of the gh-pages
 # branch (.gh-pages/, created as an orphan branch on first use), and commits
 # it locally. Manfred then publishes it himself:
 #
@@ -10,10 +11,11 @@
 #
 # One-time setup on github.com: Settings -> Pages -> Deploy from a branch ->
 # gh-pages / (root). URL: https://manfredscheucher.github.io/ksat-extra/
+# (the XOR demo: https://manfredscheucher.github.io/ksat-extra/xor-demo/)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-DIST=demo/build/dist/js/productionExecutable
+DIST=build/pages
 WT=.gh-pages   # outside build/, so a Gradle clean does not delete the worktree
 
 ./scripts/buildWeb.sh

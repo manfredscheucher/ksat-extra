@@ -1,7 +1,7 @@
 # ksat-extra
 
 Extra material for [sat-solvers-kotlin](https://github.com/manfredscheucher/sat-solvers-kotlin):
-a multiplatform demo, runtime benchmarks, docs, and the shadowing harness. Its own repo so the
+a multiplatform demo, an interactive playground, runtime benchmarks, docs, and the shadowing harness. Its own repo so the
 main one stays small; an optional submodule there, NOT pulled by default.
 
 Clone the main repo recursively, then add this submodule (`--recursive` alone skips it, since
@@ -14,7 +14,8 @@ git submodule update --init --checkout ksat-extra
 ```
 
 Everything builds from inside `ksat-extra/` (it consumes the solvers from the main repo via
-relative paths). Run the demo with a script from `scripts/`, e.g. `./scripts/runJVM.sh`.
+relative paths). Run the demo with a script from `scripts/`, e.g. `./scripts/runJVM.sh`, and the
+playground with e.g. `./scripts/runPlaygroundWeb.sh`.
 
 ## Demo
 
@@ -22,8 +23,8 @@ relative paths). Run the demo with a script from `scripts/`, e.g. `./scripts/run
 running on JVM, in the browser, on Android and on iOS. One-line run scripts per target in
 `scripts/`; see [`demo/README.md`](demo/README.md).
 
-Live in the browser (once GitHub Pages is enabled): https://manfredscheucher.github.io/ksat-extra/
-(`scripts/deployPages.sh` builds it into the `gh-pages` branch).
+Live in the browser (once GitHub Pages is enabled): https://manfredscheucher.github.io/ksat-extra/xor-demo/
+(`scripts/deployPages.sh` builds it into the `gh-pages` branch, next to the playground at the site root).
 
 <table>
   <tr>
@@ -47,6 +48,14 @@ Live in the browser (once GitHub Pages is enabled): https://manfredscheucher.git
     </td>
   </tr>
 </table>
+
+## Playground
+
+`playground/` is an interactive app (Compose Multiplatform: web, JVM desktop, Android): paste or
+load a DIMACS CNF (or generate the pigeonhole formula PHP(k)), pick a solver, find one or all
+solutions, and watch a time-stamped console log. On the web the solver runs in a Web Worker, so
+Stop works at once. Run it with `scripts/runPlaygroundWeb.sh`, `runPlaygroundJVM.sh` or
+`runPlaygroundAndroidEmulator.sh`; spec and decisions: [`doc/playground.md`](doc/playground.md).
 
 ## Benchmarks
 

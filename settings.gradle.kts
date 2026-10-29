@@ -53,3 +53,11 @@ include(":demo")
 // The Android app (AGP 9: application module separate from the KMP :demo module).
 include(":androidApp")
 project(":androidApp").projectDir = file("demo/androidApp")
+
+// The interactive playground (doc/playground.md): shared Compose UI (:playground), its Android app
+// (AGP 9 split, like :androidApp) and the Kotlin/JS Web Worker that solves off the page's thread.
+include(":playground")
+include(":playgroundAndroidApp")
+project(":playgroundAndroidApp").projectDir = file("playground/androidApp")
+include(":playgroundWorker")
+project(":playgroundWorker").projectDir = file("playground/worker")
