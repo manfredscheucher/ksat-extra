@@ -215,6 +215,17 @@ class PlaygroundViewModelTest {
     }
 
     @Test
+    fun stopThenGenerateClearsTheOutput() {
+        vm.solve()
+        service.emit(SolveEvent.Started(1_000L, 3, 4))
+        vm.stop()
+        assertFalse(vm.running)
+        vm.generate(Example.XOR, emptyList(), onFinished = {})
+        generator.onResult!!(GenerateResult.Generated("p cnf 2 2\n1 2 0\n-1 -2 0\n"))
+        assertEquals(emptyList(), texts())
+    }
+
+    @Test
     fun failedOrTooLargeGenerationIsLogged() {
         var finished = 0
         vm.generate(Example.PIGEONHOLE, listOf("5"), onFinished = { finished++ })

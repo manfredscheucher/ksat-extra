@@ -216,3 +216,12 @@ Made while building (Claude):
   ksat-extra root (new `workDir` property). The commit shown is ksat-extra's.
 - ktoy swallows a failing link (no browser); here the failure is written to the output as an
   `error:` line instead, so it is not silent.
+
+## Revision 3 (Manfred, 2026-10-30): new example while a run is going
+
+- "wenn ma example ändern möchte, aber berechnung noch läuft, sollte dialog aufgehen dass grad noch
+  berechnung läuft - diese berechnung abbrechen um neues zu laden? weil beim laden eines neuen
+  beispiels sollte output cleared sein."
+- Claude: Generate while a run is going opens "A computation is still running. Stop it and load the
+  new example?" with "Stop and load" (stops the run, then generates) and "Cancel" (back to the
+  Examples dialog). A generated example always clears the output. Load file is unchanged (not asked).

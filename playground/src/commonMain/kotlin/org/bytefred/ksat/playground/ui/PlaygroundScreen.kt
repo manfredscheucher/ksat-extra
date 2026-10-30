@@ -201,6 +201,21 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
     var selected by remember { mutableStateOf(Example.entries.first()) }
     val values = remember { Example.entries.associateWith { e -> e.params.map { mutableStateOf(it.default.toString()) } } }
     val texts = values.getValue(selected).map { it.value }
+    var confirmStop by remember { mutableStateOf(false) }
+    if (confirmStop) {
+        AlertDialog(
+            onDismissRequest = { confirmStop = false },
+            text = { Text("A computation is still running. Stop it and load the new example?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmStop = false
+                    vm.stop()
+                    vm.generate(selected, texts, onFinished = onClose)
+                }) { Text("Stop and load") }
+            },
+            dismissButton = { TextButton(onClick = { confirmStop = false }) { Text("Cancel") } },
+        )
+    }
     AlertDialog(
         onDismissRequest = {
             vm.cancelGeneration()
@@ -242,7 +257,10 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
         },
         confirmButton = {
             TextButton(
-                onClick = { vm.generate(selected, texts, onFinished = onClose) },
+                onClick = {
+                    if (vm.running) confirmStop = true
+                    else vm.generate(selected, texts, onFinished = onClose)
+                },
                 enabled = !vm.generating && texts.all(::isParamText),
             ) { Text("Generate") }
         },

@@ -118,7 +118,7 @@ class PlaygroundViewModel(
     /**
      * Generate [example] with the parameter texts [values] (each [isParamText]) in the background
      * (Web Worker / background thread); [onFinished] runs when it is done, also when it failed (the
-     * error is logged). The DIMACS text replaces the editor's.
+     * error is logged). The DIMACS text replaces the editor's and clears the output.
      */
     fun generate(example: Example, values: List<String>, onFinished: () -> Unit) {
         if (generating) return
@@ -136,7 +136,10 @@ class PlaygroundViewModel(
             if (id == generationId && generating) {
                 generating = false
                 when (result) {
-                    is GenerateResult.Generated -> dimacs = result.dimacs
+                    is GenerateResult.Generated -> {
+                        log.clear()
+                        dimacs = result.dimacs
+                    }
                     is GenerateResult.Failed -> logError("cannot generate the example: ${result.message}")
                 }
                 onFinished()
