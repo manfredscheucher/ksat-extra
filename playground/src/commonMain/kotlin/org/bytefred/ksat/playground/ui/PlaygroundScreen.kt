@@ -1,6 +1,7 @@
 package org.bytefred.ksat.playground.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -341,21 +342,10 @@ private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text("Kotlin Multiplatform ports of state-of-the-art SAT solvers (MiniSat, CaDiCaL, kissat, MicroSAT). Runs on JVM, Android, iOS, native and in the browser.")
                 Spacer(Modifier.height(8.dp))
-                Text("Source code (MIT license):")
-                Row {
-                    LinkText("ksat", "https://github.com/manfredscheucher/ksat", onLinkFailed)
-                    Text("  the solver ports", Modifier.padding(vertical = 2.dp))
-                }
-                Row {
-                    LinkText("ksat-extra", "https://github.com/manfredscheucher/ksat-extra", onLinkFailed)
-                    Text("  this playground, benchmarks and website", Modifier.padding(vertical = 2.dp))
-                }
+                FeedbackBox("ksat is in early development. Feedback is very welcome:", onLinkFailed)
                 Spacer(Modifier.height(8.dp))
-                Row {
-                    Text("Uses the DejaVu Sans Mono font (", Modifier.padding(vertical = 2.dp))
-                    LinkText("license", "https://github.com/manfredscheucher/ksat-extra/blob/main/licenses/dejavu-LICENSE.txt", onLinkFailed)
-                    Text(").", Modifier.padding(vertical = 2.dp))
-                }
+                ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the solver ports", onLinkFailed)
+                ProjectLine("ksat-extra", "https://github.com/manfredscheucher/ksat-extra", "this playground, benchmarks and website", onLinkFailed)
                 Spacer(Modifier.height(8.dp))
                 val build = buildList {
                     val sha = GeneratedBuildInfo.COMMIT_SHA
@@ -373,6 +363,31 @@ private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
         confirmButton = { TextButton(onClick = onClose) { Text("OK") } },
     )
 }
+
+/** One About line: "[name] (MIT): note", only the name is a link. */
+@Composable
+private fun ProjectLine(name: String, url: String, note: String, onLinkFailed: (String) -> Unit) {
+    Row {
+        LinkText(name, url, onLinkFailed)
+        Text(" (MIT): $note", Modifier.padding(vertical = 2.dp))
+    }
+}
+
+/** Yellow box asking for feedback, with a clickable e-mail address (as in ktoy and PoCoView). */
+@Composable
+private fun FeedbackBox(question: String, onLinkFailed: (String) -> Unit) {
+    Column(
+        Modifier.fillMaxWidth().background(Color(0xFFFFF3B0), RoundedCornerShape(8.dp))
+            .border(1.dp, Color(0xFFE0C200), RoundedCornerShape(8.dp)).padding(10.dp),
+    ) {
+        Text(question, color = Color(0xFF3A3000))
+        LinkText(EMAIL, FEEDBACK_MAILTO, onLinkFailed)
+    }
+}
+
+private const val EMAIL = "manfred.scheucher@proton.me"
+// subject "ksat feedback", body "hi manfred," + blank line
+private const val FEEDBACK_MAILTO = "mailto:$EMAIL?subject=ksat%20feedback&body=hi%20manfred%2C%0A%0A"
 
 /**
  * A clickable, underlined link that opens [url] in the browser. Android throws when no browser is
