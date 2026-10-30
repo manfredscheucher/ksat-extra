@@ -18,30 +18,30 @@ class ExampleParam(val name: String, val meaning: String, val default: Int)
  */
 enum class Example(val title: String, val params: List<ExampleParam>, val description: String) {
     XOR(
-        "XOR(x1, x2) = (x1 ∨ x2) ∧ (¬x1 ∨ ¬x2)",
+        "Example 0 (XOR): (x1 ∨ x2) ∧ (¬x1 ∨ ¬x2) (2 solutions)",
         emptyList(),
-        "2 solutions.",
+        "",
     ),
     EXACTLY_K_OF_N(
-        "Exactly k of n",
+        "Example 1: choose exactly k of n objects (n choose k solutions)",
         listOf(ExampleParam("k", "sample size", 2), ExampleParam("n", "number of objects", 4)),
-        "C(n,k) solutions. Every (k+1)-subset contains a false: C(n,k+1) clauses. For every " +
-            "(k-1)-subset T, some object outside T is true: C(n,k-1) clauses.",
+        "Every (k+1)-subset contains a false object: C(n,k+1) clauses. For every (k-1)-subset T, " +
+            "some object outside T is true: C(n,k-1) clauses.",
     ),
     PIGEONHOLE(
-        "Pigeonhole principle: n+1 pigeons into n holes (UNSAT)",
+        "Example 2 (Pigeonhole Principle): pack n+1 pigeons into n holes (UNSAT)",
         listOf(ExampleParam("n", "number of holes", 5)),
         "Every pigeon sits in a hole: n+1 clauses. No hole holds two pigeons: n·C(n+1,2) clauses.",
     ),
     RAMSEY(
-        "Ramsey graph: n vertices, no k-clique, no independent set of size l",
+        "Example 3 (Ramsey Numbers on Graphs): construct n-vertex graph with no k-clique or independent set of size l",
         listOf(
             ExampleParam("n", "number of vertices", 6),
             ExampleParam("k", "clique size", 3),
             ExampleParam("l", "independent set size", 3),
         ),
-        "C(n,2) edge variables. Every k-subset of vertices has a missing edge (no k-clique): " +
-            "C(n,k) clauses. Every l-subset has an edge (no independent set of size l): C(n,l) clauses.",
+        "C(n,2) edge variables. Every k-subset of vertices has a missing edge: C(n,k) clauses. " +
+            "Every l-subset has an edge: C(n,l) clauses.",
     );
 
     /**

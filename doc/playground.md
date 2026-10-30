@@ -157,9 +157,13 @@ Answers to Claude's questions (same day):
   comes after the start line), no `terminated after` line.
 - Show / Hide solutions: right after Solve (then Stop), always enabled, and its state stays across
   runs (Solve does not reset it).
-- Examples dialog: the radio label is the example's title (XOR's title is its formula, the others
-  `Exactly k of n`, `Pigeonhole principle: n+1 pigeons into n holes (UNSAT)`, `Ramsey graph: n
-  vertices, no k-clique, no independent set of size l`); the selected one shows its parameter fields
+- Examples dialog: the radio label is the example's title, in Manfred's draft form
+  "Example i (Name): what it does (solution info)" (after a reviewer found the first titles
+  non-uniform): `Example 0 (XOR): (x1 ∨ x2) ∧ (¬x1 ∨ ¬x2) (2 solutions)` (no description),
+  `Example 1: choose exactly k of n objects (n choose k solutions)`, `Example 2 (Pigeonhole
+  Principle): pack n+1 pigeons into n holes (UNSAT)`, `Example 3 (Ramsey Numbers on Graphs):
+  construct n-vertex graph with no k-clique or independent set of size l`. Descriptions hold only
+  the clause families with counts. The selected one shows its parameter fields
   (`name (meaning)`) and the description below its radio button. The dialog starts at XOR with the
   default values each time it opens. Generated CNF: `c <title>`, then `c n=6, k=3, l=3` (no second
   line for XOR).

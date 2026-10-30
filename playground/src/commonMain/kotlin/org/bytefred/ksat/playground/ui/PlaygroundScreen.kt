@@ -221,7 +221,9 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
                                     enabled = !vm.generating,
                                 )
                             }
-                            Text(example.description, style = MaterialTheme.typography.bodySmall)
+                            if (example.description.isNotEmpty()) {
+                                Text(example.description, style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
                 }
