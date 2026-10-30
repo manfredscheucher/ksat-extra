@@ -1,13 +1,17 @@
 package org.bytefred.ksat.playground.ui
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import org.bytefred.ksat.playground.core.GenerateRequest
+import org.bytefred.ksat.playground.core.GenerateResult
 import org.bytefred.ksat.playground.core.PlaygroundSolver
 import org.bytefred.ksat.playground.core.SolveEvent
 import org.bytefred.ksat.playground.core.SolveRequest
@@ -51,6 +55,50 @@ class CoroutineSolverService(dispatcher: CoroutineDispatcher) : SolverService {
                 // Also OutOfMemoryError / StackOverflowError: the UI must leave "running" in any case.
                 deliver(SolveEvent.Failed(nowMillis(), e.message ?: e.toString()))
             }
+        }
+    }
+
+    override fun cancel() {
+        job?.cancel()
+        job = null
+    }
+}
+
+/**
+ * Generates an example's DIMACS text off the UI thread: a Web Worker on the web, a background
+ * coroutine on JVM/Android. The result is delivered on the UI thread.
+ */
+interface GeneratorService {
+    fun generate(request: GenerateRequest, onResult: (GenerateResult) -> Unit)
+
+    /** Stop the running generation; its result is not delivered. */
+    fun cancel()
+}
+
+/** The platform's generator service. */
+expect fun createGeneratorService(): GeneratorService
+
+/**
+ * JVM/Android: the generation runs on [dispatcher] and checks for cancellation once per clause;
+ * its result is posted to Dispatchers.Main. Any throwable (also OutOfMemoryError for a huge
+ * instance) is delivered as [GenerateResult.Failed].
+ */
+class CoroutineGeneratorService(dispatcher: CoroutineDispatcher) : GeneratorService {
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    private var job: Job? = null
+
+    override fun generate(request: GenerateRequest, onResult: (GenerateResult) -> Unit) {
+        cancel()
+        job = scope.launch {
+            val result = try {
+                GenerateResult.Generated(request.example.dimacs(request.values, checkCancelled = { ensureActive() }))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                GenerateResult.Failed(e.message ?: e.toString())
+            }
+            val run = coroutineContext.job
+            scope.launch(Dispatchers.Main) { if (!run.isCancelled) onResult(result) }
         }
     }
 

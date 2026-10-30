@@ -20,11 +20,20 @@ class FormatTest {
     }
 
     @Test
-    fun elapsedIsMinutesSecondsTenths() {
-        assertEquals("0:00.0", formatElapsed(0))
-        assertEquals("0:03.4", formatElapsed(3_456))
-        assertEquals("2:05.0", formatElapsed(125_000))
-        assertEquals("0:00.0", formatElapsed(-5))
+    fun durationIsKotlinDurationStyle() {
+        assertEquals("412ms", formatDuration(412))
+        assertEquals("3.412s", formatDuration(3_412))
+        assertEquals("1m 3.412s", formatDuration(63_412))
+        assertEquals("1h 0m 5.001s", formatDuration(3_605_001))
+        assertEquals("0s", formatDuration(0))
+    }
+
+    @Test
+    fun optionValueWithoutAFractionWhenIntegral() {
+        assertEquals("2", formatOptionValue(2))
+        assertEquals("91648253", formatOptionValue(91648253.0))
+        assertEquals("0.95", formatOptionValue(0.95))
+        assertEquals("Infinity", formatOptionValue(Double.POSITIVE_INFINITY))
     }
 
     @Test

@@ -11,7 +11,7 @@ import ksat_extra.playground.generated.resources.Res
 import ksat_extra.playground.generated.resources.dejavu_sans_mono
 import org.jetbrains.compose.resources.Font
 
-/** Monospace style of the editor and the console; FontFamily.Monospace outside [ProvideMonoStyle]. */
+/** Monospace style of the editor and the output; FontFamily.Monospace outside [ProvideMonoStyle]. */
 val LocalMonoStyle = staticCompositionLocalOf {
     TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp)
 }

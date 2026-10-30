@@ -16,9 +16,11 @@ object PlaygroundSolver {
     /**
      * Parse the DIMACS text, then solve. One-solution mode: a single solve. All-solutions mode:
      * ksat's [enumerateModels] (blocking clauses), incremental where the facade allows it (not for
-     * MICROSAT, and not for MINISAT with option pre=1, its default; no options are passed), with [isCancelled] checked after each solution: once it is true,
-     * the run ends without a [SolveEvent.Finished]. A solve that is already running cannot be
-     * interrupted through the ksat facade.
+     * MICROSAT, and not for MINISAT with option pre=1, its default), with [isCancelled] checked after
+     * each solution: once it is true, the run ends without a [SolveEvent.Finished]. A solve that is
+     * already running cannot be interrupted through the ksat facade. The request's options go to
+     * every solver; ksat rejects an invalid one with an IllegalArgumentException, which the caller
+     * reports as [SolveEvent.Failed].
      */
     fun run(request: SolveRequest, now: () -> Long, isCancelled: () -> Boolean, onEvent: (SolveEvent) -> Unit) {
         val cnf = try {
@@ -30,7 +32,7 @@ object PlaygroundSolver {
         onEvent(SolveEvent.Started(now(), cnf.numVars, cnf.clauses.size))
         when (request.mode) {
             Mode.ONE -> {
-                val ksat = Ksat(request.solver, numVars = cnf.numVars)
+                val ksat = Ksat(request.solver, numVars = cnf.numVars, options = request.options)
                 for (clause in cnf.clauses) ksat.addClause(clause)
                 if (ksat.solve() == SatResult.SAT) {
                     onEvent(SolveEvent.SolutionFound(now(), 1, literals(cnf.numVars) { ksat.valueOf(it) }))
@@ -40,9 +42,13 @@ object PlaygroundSolver {
                 }
             }
             Mode.ALL -> {
-                val incremental = request.solver != Solver.MICROSAT && request.solver != Solver.MINISAT
+                val miniSatPre = (request.options["pre"]?.toDouble() ?: 1.0) == 1.0
+                val incremental = request.solver != Solver.MICROSAT && !(request.solver == Solver.MINISAT && miniSatPre)
                 var count = 0
-                for (model in enumerateModels(request.solver, cnf.numVars, cnf.clauses, incremental = incremental)) {
+                val models = enumerateModels(
+                    request.solver, cnf.numVars, cnf.clauses, incremental = incremental, options = request.options,
+                )
+                for (model in models) {
                     count++
                     onEvent(SolveEvent.SolutionFound(now(), count, literals(cnf.numVars) { model[it - 1] }))
                     if (isCancelled()) return

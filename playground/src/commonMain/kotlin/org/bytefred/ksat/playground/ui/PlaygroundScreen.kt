@@ -1,7 +1,6 @@
 package org.bytefred.ksat.playground.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -15,13 +14,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -39,76 +40,57 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
+import org.bytefred.ksat.facade.OptionType
 import org.bytefred.ksat.facade.Solver
+import org.bytefred.ksat.facade.SolverOption
+import org.bytefred.ksat.facade.solverOptions
+import org.bytefred.ksat.playground.core.Example
 import org.bytefred.ksat.playground.core.Mode
-import org.bytefred.ksat.playground.core.PIGEONHOLE_K_RANGE
-import org.bytefred.ksat.playground.core.STARTER_EXAMPLE
-import org.bytefred.ksat.playground.core.formatElapsed
+import org.bytefred.ksat.playground.core.formatOptionValue
 import org.bytefred.ksat.playground.core.formatSolution
 import org.bytefred.ksat.playground.core.formatTimestamp
-import org.bytefred.ksat.playground.core.nowMillis
-import org.bytefred.ksat.playground.core.pigeonholeDimacs
+import org.bytefred.ksat.playground.core.isParamText
 
-/** Side by side (editor | console) from this width on; stacked below it (phones). */
+/** Side by side (editor | output) from this width on; stacked below it (phones). */
 private val WIDE_LAYOUT = 840.dp
 
 /**
  * The playground: a header, one row of controls (wrapping on narrow screens), then the DIMACS
- * editor and the console log.
+ * editor and the output.
  */
 @Composable
 fun PlaygroundScreen(vm: PlaygroundViewModel) {
     var showExamples by remember { mutableStateOf(false) }
+    var showOptions by remember { mutableStateOf(false) }
     val loadFile = rememberFileLoader(onLoaded = { vm.dimacs = it }, onFailed = vm::logError)
 
     Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Header()
-        Controls(vm, onExamples = { showExamples = true }, onLoadFile = loadFile)
+        Text("ksat playground", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Controls(vm, onExamples = { showExamples = true }, onLoadFile = loadFile, onOptions = { showOptions = true })
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
             if (maxWidth >= WIDE_LAYOUT) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Editor(vm, Modifier.weight(1f).fillMaxSize())
-                    Console(vm, Modifier.weight(1f).fillMaxSize())
+                    Output(vm, Modifier.weight(1f).fillMaxSize())
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Editor(vm, Modifier.weight(1f).fillMaxWidth())
-                    Console(vm, Modifier.weight(1f).fillMaxWidth())
+                    Output(vm, Modifier.weight(1f).fillMaxWidth())
                 }
             }
         }
     }
 
-    if (showExamples) {
-        ExamplesDialog(
-            onPick = { text ->
-                vm.dimacs = text
-                showExamples = false
-            },
-            onDismiss = { showExamples = false },
-        )
-    }
+    if (showExamples) ExamplesDialog(vm, onClose = { showExamples = false })
+    if (showOptions) OptionsDialog(vm, onClose = { showOptions = false })
 }
 
 @Composable
-private fun Header() {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text("ksat playground", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.weight(1f))
-        xorDemoLink?.let { link ->
-            val uriHandler = LocalUriHandler.current
-            TextButton(onClick = { uriHandler.openUri(link) }) { Text("XOR demo") }
-        }
-    }
-}
-
-@Composable
-private fun Controls(vm: PlaygroundViewModel, onExamples: () -> Unit, onLoadFile: () -> Unit) {
+private fun Controls(vm: PlaygroundViewModel, onExamples: () -> Unit, onLoadFile: () -> Unit, onOptions: () -> Unit) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -117,6 +99,7 @@ private fun Controls(vm: PlaygroundViewModel, onExamples: () -> Unit, onLoadFile
         OutlinedButton(onClick = onExamples) { Text("Examples") }
         OutlinedButton(onClick = onLoadFile) { Text("Load file") }
         SolverDropdown(vm.solver, onPick = { vm.solver = it })
+        OutlinedButton(onClick = onOptions) { Text("Options") }
         for (mode in Mode.entries) {
             Row(
                 Modifier.selectable(selected = vm.mode == mode, onClick = { vm.mode = mode }, role = Role.RadioButton),
@@ -127,8 +110,10 @@ private fun Controls(vm: PlaygroundViewModel, onExamples: () -> Unit, onLoadFile
             }
         }
         Button(onClick = vm::solve, enabled = !vm.running) { Text("Solve") }
+        OutlinedButton(onClick = { vm.showSolutions = !vm.showSolutions }) {
+            Text(if (vm.showSolutions) "Hide solutions" else "Show solutions")
+        }
         OutlinedButton(onClick = vm::stop, enabled = vm.running) { Text("Stop") }
-        ElapsedTime(vm)
     }
 }
 
@@ -151,21 +136,6 @@ private fun SolverDropdown(selected: Solver, onPick: (Solver) -> Unit) {
     }
 }
 
-/** How long the latest run has been running (live, every 0.1 s), or how long it took. */
-@Composable
-private fun ElapsedTime(vm: PlaygroundViewModel) {
-    val start = vm.startedAt ?: return
-    var now by remember { mutableStateOf(nowMillis()) }
-    LaunchedEffect(vm.running) {
-        while (vm.running) {
-            now = nowMillis()
-            delay(100)
-        }
-    }
-    val elapsed = formatElapsed((vm.endedAt ?: now) - start)
-    Text(if (vm.running) "running $elapsed" else "time $elapsed", style = LocalMonoStyle.current)
-}
-
 @Composable
 private fun Editor(vm: PlaygroundViewModel, modifier: Modifier) {
     OutlinedTextField(
@@ -177,40 +147,28 @@ private fun Editor(vm: PlaygroundViewModel, modifier: Modifier) {
     )
 }
 
-/** The console log: one time-stamped line per event; a solution line expands on click. */
+/** The output of the latest run: one time-stamped line per event, solutions shown on the toggle. */
 @Composable
-private fun Console(vm: PlaygroundViewModel, modifier: Modifier) {
+private fun Output(vm: PlaygroundViewModel, modifier: Modifier) {
     val listState = rememberLazyListState()
     LaunchedEffect(vm.log.size) {
         if (vm.log.isNotEmpty()) listState.scrollToItem(vm.log.size - 1)
     }
-    val mono = LocalMonoStyle.current.copy(color = CONSOLE_TEXT)
+    val mono = LocalMonoStyle.current.copy(color = OUTPUT_TEXT)
     // top padding: line up with the editor's outline, which sits below its floating label
-    Column(modifier.padding(top = 8.dp).background(CONSOLE_BACKGROUND, RoundedCornerShape(4.dp)).padding(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("console", style = mono.copy(color = CONSOLE_DIM), modifier = Modifier.weight(1f))
-            TextButton(
-                onClick = vm::clearLog,
-                enabled = vm.log.isNotEmpty(),
-                colors = ButtonDefaults.textButtonColors(contentColor = CONSOLE_TEXT, disabledContentColor = CONSOLE_DIM),
-            ) { Text("Clear") }
-        }
+    Column(modifier.padding(top = 8.dp).background(OUTPUT_BACKGROUND, RoundedCornerShape(4.dp)).padding(8.dp)) {
+        Text("Output", style = mono.copy(color = OUTPUT_DIM))
         Spacer(Modifier.height(4.dp))
         LazyColumn(Modifier.fillMaxSize(), state = listState) {
-            itemsIndexed(vm.log) { index, line ->
-                val solution = line.solution
-                Column(
-                    if (solution != null) Modifier.fillMaxWidth().clickable { vm.toggleSolution(index) }
-                    else Modifier.fillMaxWidth(),
-                ) {
-                    // time stamp and message side by side, so a wrapped message stays indented
-                    Row {
-                        Text(formatTimestamp(line.timeMillis) + "  ", style = mono.copy(color = CONSOLE_DIM))
-                        Column(Modifier.weight(1f)) {
-                            Text(line.text, style = mono)
-                            if (solution != null && line.expanded) {
-                                Text(formatSolution(solution), style = mono.copy(color = CONSOLE_SOLUTION))
-                            }
+            items(vm.log) { line ->
+                // time stamp and message side by side, so a wrapped message stays indented
+                Row(Modifier.fillMaxWidth()) {
+                    Text(formatTimestamp(line.timeMillis) + "  ", style = mono.copy(color = OUTPUT_DIM))
+                    Column(Modifier.weight(1f)) {
+                        Text(line.text, style = mono)
+                        val solution = line.solution
+                        if (solution != null && vm.showSolutions) {
+                            Text(formatSolution(solution), style = mono.copy(color = OUTPUT_SOLUTION))
                         }
                     }
                 }
@@ -219,41 +177,125 @@ private fun Console(vm: PlaygroundViewModel, modifier: Modifier) {
     }
 }
 
-private val CONSOLE_BACKGROUND = Color(0xFF1E1E1E)
-private val CONSOLE_TEXT = Color(0xFFD4D4D4)
-private val CONSOLE_DIM = Color(0xFF8A8A8A)
-private val CONSOLE_SOLUTION = Color(0xFF9CDCFE)
+private val OUTPUT_BACKGROUND = Color(0xFF1E1E1E)
+private val OUTPUT_TEXT = Color(0xFFD4D4D4)
+private val OUTPUT_DIM = Color(0xFF8A8A8A)
+private val OUTPUT_SOLUTION = Color(0xFF9CDCFE)
 
-/** The starter CNF, or the pigeonhole formula PHP(k) for a chosen k. */
+/**
+ * One radio button per [Example]; the selected one shows its parameter fields and description.
+ * Generate creates the instance into the editor (in the background; Cancel stops it).
+ */
 @Composable
-private fun ExamplesDialog(onPick: (String) -> Unit, onDismiss: () -> Unit) {
-    var kText by remember { mutableStateOf("5") }
-    val k = kText.trim().toIntOrNull()?.takeIf { it in PIGEONHOLE_K_RANGE }
+private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
+    var selected by remember { mutableStateOf(Example.entries.first()) }
+    val values = remember { Example.entries.associateWith { e -> e.params.map { mutableStateOf(it.default.toString()) } } }
+    val texts = values.getValue(selected).map { it.value }
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            vm.cancelGeneration()
+            onClose()
+        },
         title = { Text("Examples") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = { onPick(STARTER_EXAMPLE) }) {
-                    Text("Exactly one of x1, x2, x3 (3 solutions)")
-                }
-                Text("Pigeonhole PHP(k): k+1 pigeons into k holes (UNSAT)")
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value = kText,
-                        onValueChange = { kText = it },
-                        modifier = Modifier.width(160.dp),
-                        label = { Text("k (${PIGEONHOLE_K_RANGE.first} to ${PIGEONHOLE_K_RANGE.last})") },
-                        singleLine = true,
-                        isError = k == null,
-                    )
-                    TextButton(onClick = { k?.let { onPick(pigeonholeDimacs(it)) } }, enabled = k != null) {
-                        Text("Generate")
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                for (example in Example.entries) {
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .selectable(selected = example == selected, onClick = { selected = example }, role = Role.RadioButton),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = example == selected, onClick = null)
+                        Text(example.title, Modifier.padding(start = 8.dp))
                     }
+                    if (example == selected) {
+                        Column(Modifier.padding(start = 40.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            for ((param, value) in example.params.zip(values.getValue(example))) {
+                                OutlinedTextField(
+                                    value = value.value,
+                                    onValueChange = { value.value = it },
+                                    modifier = Modifier.width(240.dp),
+                                    label = { Text("${param.name} (${param.meaning})") },
+                                    singleLine = true,
+                                    isError = !isParamText(value.value),
+                                    enabled = !vm.generating,
+                                )
+                            }
+                            Text(example.description, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                if (vm.generating) Text("generating ...")
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { vm.generate(selected, texts, onFinished = onClose) },
+                enabled = !vm.generating && texts.all(::isParamText),
+            ) { Text("Generate") }
+        },
+        dismissButton = {
+            TextButton(onClick = {
+                vm.cancelGeneration()
+                onClose()
+            }) { Text("Cancel") }
+        },
+    )
+}
+
+/**
+ * All options of the selected solver ([solverOptions]): name, upstream description and default;
+ * a checkbox for BOOL, a text field for INT / DOUBLE. Edits take effect at once and are kept per
+ * solver for the session; only values that differ from the default are passed to the solver.
+ */
+@Composable
+private fun OptionsDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
+    val solver = vm.solver
+    val options = remember(solver) { solverOptions(solver) }
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text("${solver.name} options") },
+        text = {
+            if (options.isEmpty()) {
+                Text("${solver.name} has no options.")
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(options, key = { it.name }) { option -> OptionRow(vm, solver, option) }
                 }
             }
         },
-        confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(onClick = onClose) { Text("Close") } },
+        dismissButton = {
+            if (options.isNotEmpty()) TextButton(onClick = { vm.resetOptions(solver) }) { Text("Reset to defaults") }
+        },
     )
+}
+
+@Composable
+private fun OptionRow(vm: PlaygroundViewModel, solver: Solver, option: SolverOption) {
+    val text = vm.optionText(solver, option)
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(option.name, Modifier.weight(1f), style = LocalMonoStyle.current, fontWeight = FontWeight.Bold)
+            if (option.type == OptionType.BOOL) {
+                Checkbox(
+                    checked = parseOptionValue(text)?.toDouble() == 1.0,
+                    onCheckedChange = { vm.setOptionText(solver, option.name, if (it) "1" else "0") },
+                )
+            } else {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { vm.setOptionText(solver, option.name, it) },
+                    modifier = Modifier.width(160.dp),
+                    singleLine = true,
+                    isError = parseOptionValue(text) == null,
+                    textStyle = LocalMonoStyle.current,
+                )
+            }
+        }
+        Text(
+            "${option.help} (default: ${formatOptionValue(option.default)})",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
 }

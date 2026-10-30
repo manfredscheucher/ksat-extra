@@ -54,7 +54,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
-            // bundled DejaVu Sans Mono for the editor and the console (composeResources/font)
+            // bundled DejaVu Sans Mono for the editor and the output (composeResources/font)
             implementation(compose.components.resources)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.kotlinx.coroutines.core)

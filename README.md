@@ -23,9 +23,6 @@ playground with e.g. `./scripts/runPlaygroundWeb.sh`.
 running on JVM, in the browser, on Android and on iOS. One-line run scripts per target in
 `scripts/`; see [`demo/README.md`](demo/README.md).
 
-Live in the browser (once GitHub Pages is enabled): https://manfredscheucher.github.io/ksat-extra/xor-demo/
-(`scripts/deployPages.sh` builds it into the `gh-pages` branch, next to the playground at the site root).
-
 <table>
   <tr>
     <td align="center" width="50%">
@@ -52,8 +49,8 @@ Live in the browser (once GitHub Pages is enabled): https://manfredscheucher.git
 ## Playground
 
 `playground/` is an interactive app (Compose Multiplatform: web, JVM desktop, Android): paste or
-load a DIMACS CNF (or generate the pigeonhole formula PHP(k)), pick a solver, find one or all
-solutions, and watch a time-stamped console log. On the web the solver runs in a Web Worker, so
+load a DIMACS CNF (or generate an example: XOR, exactly k of n, pigeonhole, Ramsey graph), pick a
+solver and its options, find one or all solutions, and read the time-stamped output. On the web the solver runs in a Web Worker, so
 Stop works at once. Run it with `scripts/runPlaygroundWeb.sh`, `runPlaygroundJVM.sh` or
 `runPlaygroundAndroidEmulator.sh`; spec and decisions: [`doc/playground.md`](doc/playground.md).
 

@@ -9,15 +9,15 @@ import javax.swing.filechooser.FileNameExtensionFilter
 // Desktop: the solver runs on a background coroutine; files are picked with a Swing file chooser.
 actual fun createSolverService(): SolverService = CoroutineSolverService(solverDispatcher)
 
+actual fun createGeneratorService(): GeneratorService = CoroutineGeneratorService(solverDispatcher)
+
 /**
- * One daemon thread per running solve (a cached pool): a solve the ksat facade cannot interrupt
- * keeps running after Stop, and must not block the next run.
+ * One daemon thread per running solve or generation (a cached pool): a solve the ksat facade
+ * cannot interrupt keeps running after Stop, and must not block the next run.
  */
 private val solverDispatcher = Executors.newCachedThreadPool { task ->
     Thread(task, "ksat-solver").apply { isDaemon = true }
 }.asCoroutineDispatcher()
-
-actual val xorDemoLink: String? = null
 
 @Composable
 actual fun rememberFileLoader(onLoaded: (text: String) -> Unit, onFailed: (message: String) -> Unit): () -> Unit = {

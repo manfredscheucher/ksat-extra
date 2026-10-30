@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Deploy the website to GitHub Pages (branch gh-pages), WITHOUT pushing: the ksat
-# playground at the site root, the XOR demo under xor-demo/.
+# playground at the site root.
 #
 # Builds the site (scripts/buildWeb.sh), copies it into a git worktree of the gh-pages
 # branch (.gh-pages/, created as an orphan branch on first use), and commits
@@ -11,7 +11,6 @@
 #
 # One-time setup on github.com: Settings -> Pages -> Deploy from a branch ->
 # gh-pages / (root). URL: https://manfredscheucher.github.io/ksat-extra/
-# (the XOR demo: https://manfredscheucher.github.io/ksat-extra/xor-demo/)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

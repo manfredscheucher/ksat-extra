@@ -145,3 +145,44 @@ Answers to Claude's questions (same day):
 - Example 0 description: just note "2 solutions"; it is trivial. In general: keep the example texts
   uniform and short; nothing simple gets extra text just so that there is text (check with a
   reviewer).
+
+### Revision 1: made while building (Claude)
+
+- Output lines: the start line (`start solving: <SOLVER>, <mode>, <n> variables, <m> clauses`) is
+  unchanged and does not list the options. The end lines carry the time of the end event (worker /
+  solver thread; Stop: when Stop was clicked); X = end time minus the time Solve was clicked.
+- Duration: `Duration.toString()` of whole milliseconds, so trailing zeros are dropped as Kotlin does
+  (`2.55s`, `1s`) and zero is `0s`.
+- An error ends a run with the error line only (parse error, and also an option ksat rejects, which
+  comes after the start line), no `terminated after` line.
+- Show / Hide solutions: right after Solve (then Stop), always enabled, and its state stays across
+  runs (Solve does not reset it).
+- Examples dialog: the radio label is the example's title (XOR's title is its formula, the others
+  `Exactly k of n`, `Pigeonhole principle: n+1 pigeons into n holes (UNSAT)`, `Ramsey graph: n
+  vertices, no k-clique, no independent set of size l`); the selected one shows its parameter fields
+  (`name (meaning)`) and the description below its radio button. The dialog starts at XOR with the
+  default values each time it opens. Generated CNF: `c <title>`, then `c n=6, k=3, l=3` (no second
+  line for XOR).
+- Parameters: valid = an integer >= 0 (optional sign, `-0` counts as 0). A valid value above
+  2147483647 (Int) is not rejected by the dialog: Generate logs
+  `error: cannot generate the example: n = ... is larger than 2147483647`. An instance with more than
+  2147483647 variables fails the same way (DIMACS variables are Int).
+- Generation runs in a Web Worker on the web (same worker script, a `generate` request) and on a
+  background thread on JVM/Android, checking for cancellation once per clause. While it runs the
+  dialog shows `generating ...` and Generate is disabled; Cancel (or a click outside) stops it and
+  closes the dialog. A failure (incl. out of memory) is logged as an error line and closes the
+  dialog. Known limit: no size cap, so a huge but finite instance makes the editor slow.
+- Exactly k of n, k > n: only the empty clause (`p cnf n 1`). k = 0: the (k-1)-family is empty.
+- Ramsey edge variable numbering: edges {i, j}, i < j, row by row from 1.
+- Options dialog: title `<SOLVER> options`; per option the name (bold, monospace) with a checkbox
+  (BOOL) or a text field (INT / DOUBLE) next to it, below it the upstream help text and
+  `(default: X)`. Buttons `Reset to defaults` and `Close`; edits apply at once (no OK / Cancel).
+  A field that is not a number is marked red; Solve then logs
+  `error: <SOLVER> option '<name>': '<text>' is not a number` and does not start. Range and
+  integrality are left to ksat (its error is logged as the run's error line).
+- "Changed" = differs from the upstream default by value: an edit back to the default value is not
+  passed. Values are sent as Int when the text is an Int, else as Double.
+- Worker protocol: `solve <SOLVER> <MODE> name=value ...` + newline + DIMACS;
+  `generate <EXAMPLE> <values...>` -> `generated` + newline + DIMACS, or `failed <message>`.
+- The "XOR demo" link is gone, so the web/JVM/Android `xorDemoLink` platform value is gone too;
+  README, `scripts/README.md` and `deployPages.sh` no longer mention `xor-demo/`.

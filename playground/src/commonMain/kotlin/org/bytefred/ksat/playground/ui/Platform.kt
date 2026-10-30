@@ -9,6 +9,3 @@ import androidx.compose.runtime.Composable
  */
 @Composable
 expect fun rememberFileLoader(onLoaded: (text: String) -> Unit, onFailed: (message: String) -> Unit): () -> Unit
-
-/** Link to the XOR demo next to the playground (the web build on GitHub Pages), or null. */
-expect val xorDemoLink: String?

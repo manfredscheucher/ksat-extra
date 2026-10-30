@@ -3,6 +3,7 @@ package org.bytefred.ksat.playground.core
 import org.bytefred.ksat.facade.Solver
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -47,6 +48,34 @@ class PlaygroundSolverTest {
     }
 
     @Test
+    fun optionsReachTheSolver() {
+        // MiniSat pre=0 (core solver, incremental enumeration) and CaDiCaL with options changed
+        for ((solver, options) in listOf(
+            Solver.MINISAT to mapOf<String, Number>("pre" to 0, "var-decay" to 0.8),
+            Solver.MINISAT to mapOf<String, Number>("pre" to 1, "elim" to 0),
+            Solver.CADICAL to mapOf<String, Number>("elim" to 0, "seed" to 7),
+        )) {
+            val events = runAll(SolveRequest(solver, Mode.ALL, STARTER_EXAMPLE, options))
+            assertEquals(3, events.count { it is SolveEvent.SolutionFound }, "$solver $options")
+            assertEquals(Outcome.NO_MORE_SOLUTIONS, assertIs<SolveEvent.Finished>(events.last()).outcome)
+        }
+    }
+
+    @Test
+    fun invalidOptionsAreRejectedByKsat() {
+        for ((solver, options) in listOf(
+            Solver.MINISAT to mapOf<String, Number>("bogus" to 1),
+            Solver.MINISAT to mapOf<String, Number>("pre" to 0, "elim" to 0),
+            Solver.MINISAT to mapOf<String, Number>("var-decay" to 2.0),
+            Solver.KISSAT to mapOf<String, Number>("seed" to 1),
+        )) for (mode in Mode.entries) {
+            assertFailsWith<IllegalArgumentException>("$solver $options $mode") {
+                runAll(SolveRequest(solver, mode, STARTER_EXAMPLE, options))
+            }
+        }
+    }
+
+    @Test
     fun unsatInBothModes() {
         for (mode in Mode.entries) {
             val events = runAll(SolveRequest(Solver.CADICAL, mode, "p cnf 1 2\n1 0\n-1 0\n"))
@@ -62,6 +91,13 @@ class PlaygroundSolverTest {
             assertEquals(listOf(emptyList()), events.filterIsInstance<SolveEvent.SolutionFound>().map { it.literals }, "$solver")
             assertEquals(Outcome.NO_MORE_SOLUTIONS, assertIs<SolveEvent.Finished>(events.last()).outcome, "$solver")
         }
+    }
+
+    @Test
+    fun emptyTextHasExactlyTheEmptySolution() {
+        val events = runAll(SolveRequest(Solver.MINISAT, Mode.ONE, ""))
+        assertEquals(listOf(emptyList()), events.filterIsInstance<SolveEvent.SolutionFound>().map { it.literals })
+        assertEquals(Outcome.ONE_SOLUTION, assertIs<SolveEvent.Finished>(events.last()).outcome)
     }
 
     @Test

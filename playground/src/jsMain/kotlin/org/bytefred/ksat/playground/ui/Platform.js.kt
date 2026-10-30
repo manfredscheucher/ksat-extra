@@ -2,6 +2,8 @@ package org.bytefred.ksat.playground.ui
 
 import androidx.compose.runtime.Composable
 import kotlinx.browser.document
+import org.bytefred.ksat.playground.core.GenerateRequest
+import org.bytefred.ksat.playground.core.GenerateResult
 import org.bytefred.ksat.playground.core.SolveEvent
 import org.bytefred.ksat.playground.core.SolveRequest
 import org.bytefred.ksat.playground.core.nowMillis
@@ -20,54 +22,91 @@ import org.w3c.files.get
  */
 actual fun createSolverService(): SolverService = WorkerSolverService()
 
-private class WorkerSolverService : SolverService {
+/** Web: examples are generated in a Web Worker as well ([GenerateRequest.encode] / [GenerateResult.encode]). */
+actual fun createGeneratorService(): GeneratorService = WorkerGeneratorService()
+
+private const val WORKER_SCRIPT = "playground-worker.js"
+
+/**
+ * The current worker of a service. [start] terminates the previous one; [onMessage] and
+ * [onFailure] are only called for the current worker: a message of a terminated worker may already
+ * be queued, and must not reach (or [cancel]) the next one.
+ */
+private class WorkerSlot {
     private var worker: Worker? = null
 
-    override fun solve(request: SolveRequest, onEvent: (SolveEvent) -> Unit) {
+    /** Start a worker and post [message] to it; [onFailure] if it cannot start. */
+    fun start(message: String, onMessage: (String) -> Unit, onFailure: (String) -> Unit) {
         cancel()
         val w = try {
             Worker(WORKER_SCRIPT).also { worker = it }
         } catch (e: Throwable) {
-            onEvent(SolveEvent.Failed(nowMillis(), "cannot start the solver worker: ${e.message ?: e.toString()}"))
+            onFailure("cannot start the solver worker: ${e.message ?: e.toString()}")
             return
         }
-        // Both handlers ignore a worker that is no longer the current one: a message of a stopped
-        // worker may already be queued, and its cancel() must not terminate the next run's worker.
-        w.onmessage = { message ->
-            if (worker === w) {
-                val event = try {
-                    SolveEvent.decode(message.data as String)
-                } catch (e: Throwable) {
-                    SolveEvent.Failed(nowMillis(), "unreadable message from the solver worker: ${e.message}")
-                }
-                if (event is SolveEvent.Finished || event is SolveEvent.Failed) cancel()
-                onEvent(event)
-            }
-        }
+        w.onmessage = { m -> if (worker === w) onMessage(m.data as String) }
         // An uncaught error in the worker (also a stack overflow, or the script failing to load)
-        // ends the run, so the UI never waits forever.
+        // ends the job, so the UI never waits forever.
         w.onerror = { error ->
             if (worker === w) {
                 val detail = error.asDynamic().message as? String
                 cancel()
-                onEvent(SolveEvent.Failed(nowMillis(), "the solver worker failed${detail?.let { ": $it" } ?: ""}"))
+                onFailure("the solver worker failed${detail?.let { ": $it" } ?: ""}")
             }
         }
-        w.postMessage(request.encode())
+        w.postMessage(message)
     }
 
-    override fun cancel() {
+    fun cancel() {
         worker?.terminate()
         worker = null
     }
-
-    private companion object {
-        const val WORKER_SCRIPT = "playground-worker.js"
-    }
 }
 
-/** On GitHub Pages the XOR demo is served under xor-demo/ next to the playground. */
-actual val xorDemoLink: String? = "xor-demo/"
+private class WorkerSolverService : SolverService {
+    private val slot = WorkerSlot()
+
+    override fun solve(request: SolveRequest, onEvent: (SolveEvent) -> Unit) {
+        slot.start(
+            request.encode(),
+            onMessage = { text ->
+                val event = try {
+                    SolveEvent.decode(text)
+                } catch (e: Throwable) {
+                    SolveEvent.Failed(nowMillis(), "unreadable message from the solver worker: ${e.message}")
+                }
+                if (event is SolveEvent.Finished || event is SolveEvent.Failed) slot.cancel()
+                onEvent(event)
+            },
+            onFailure = { onEvent(SolveEvent.Failed(nowMillis(), it)) },
+        )
+    }
+
+    override fun cancel() = slot.cancel()
+}
+
+private class WorkerGeneratorService : GeneratorService {
+    private val slot = WorkerSlot()
+
+    override fun generate(request: GenerateRequest, onResult: (GenerateResult) -> Unit) {
+        slot.start(
+            request.encode(),
+            onMessage = { text ->
+                slot.cancel()
+                onResult(
+                    try {
+                        GenerateResult.decode(text)
+                    } catch (e: Throwable) {
+                        GenerateResult.Failed("unreadable message from the solver worker: ${e.message}")
+                    }
+                )
+            },
+            onFailure = { onResult(GenerateResult.Failed(it)) },
+        )
+    }
+
+    override fun cancel() = slot.cancel()
+}
 
 // Browser: load via a hidden <input type=file> + FileReader.
 @Composable
