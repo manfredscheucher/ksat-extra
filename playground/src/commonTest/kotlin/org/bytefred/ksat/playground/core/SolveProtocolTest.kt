@@ -10,8 +10,8 @@ class SolveProtocolTest {
 
     @Test
     fun requestRoundTrips() {
-        val r = SolveRequest.decode(SolveRequest(Solver.MINISAT_SIMP, Mode.ALL, STARTER_EXAMPLE).encode())
-        assertEquals(Solver.MINISAT_SIMP, r.solver)
+        val r = SolveRequest.decode(SolveRequest(Solver.KISSAT, Mode.ALL, STARTER_EXAMPLE).encode())
+        assertEquals(Solver.KISSAT, r.solver)
         assertEquals(Mode.ALL, r.mode)
         assertEquals(STARTER_EXAMPLE, r.dimacs)
     }

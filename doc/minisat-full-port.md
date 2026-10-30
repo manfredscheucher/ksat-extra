@@ -146,6 +146,11 @@ changes).
 
 ## Facade decision
 
+Superseded on 2026-10-30 by `solver-options.md`: `Solver.MINISAT_SIMP` is gone. `Solver.MINISAT`
+is `MiniSatSimp` by default (upstream option `pre` = 1) and the core `Solver` with `pre` = 0. The
+semantics below still hold; read `MINISAT_SIMP` as MINISAT with `pre` = 1 and `MINISAT` as `pre` = 0
+(the facade tests run both as `MINISAT_PRE` / `MINISAT_CORE`).
+
 - `Solver.MINISAT` stays the core `Solver` (no preprocessing, fully incremental, like the
   IPASIR wrappers of MiniSat).
 - New enum value `Solver.MINISAT_SIMP` = `MiniSatSimp` (an enum value, like the other solver
@@ -211,8 +216,8 @@ So:
   order. Everything else is proof output (only with a proof file), rdb-at (default 0: the old
   condition), show_info (state for rdb-at, printing), and the `verbosity && show_info != 1`
   progress print. So `csbCompat` switches only that order (and the FIX 4 below, which only exists
-  for master's order). The facade (`Solver.MINISAT`, `Solver.MINISAT_SIMP`) uses the defaults,
-  i.e. master.
+  for master's order). The facade (`Solver.MINISAT`, both `pre` values) uses the
+  defaults, i.e. master.
 - Genuine upstream bugs are fixed, each isolated, reproduced and marked `BUG FIX` in the code;
   see the bug list.
 

@@ -69,8 +69,9 @@ Answers to Claude's questions (same day):
   show something. Defaults: solver MINISAT, mode "one solution".
 - Examples dialog: the starter CNF, and PHP(k) with k typed in (default 5, allowed 1..30; larger
   texts make the text field sluggish and are far beyond what solves in reasonable time).
-- All-solutions mode: incremental enumeration (one warm solver) for MINISAT, CADICAL, KISSAT; a fresh
-  solver per round for MICROSAT and MINISAT_SIMP (facade rule). Zero solutions logs `UNSAT. stop.`.
+- All-solutions mode: incremental enumeration (one warm solver) for CADICAL, KISSAT; a fresh
+  solver per round for MICROSAT and MINISAT (facade rule; MiniSat runs with its default option
+  pre=1). Zero solutions logs `UNSAT. stop.`.
 - Elapsed timer next to the buttons: `running m:ss.t` while solving, `time m:ss.t` afterwards.
 - Layout: header (title; on the web a link to the XOR demo), one row of controls (wraps on narrow
   screens), then the editor and the console: side by side from 840 dp width, stacked below.

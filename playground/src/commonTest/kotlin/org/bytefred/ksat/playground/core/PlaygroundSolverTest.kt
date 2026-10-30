@@ -32,7 +32,7 @@ class PlaygroundSolverTest {
 
     @Test
     fun allSolutionsModeEnumeratesEveryModelWithEverySolver() {
-        // incl. MICROSAT and MINISAT_SIMP, which must use the non-incremental enumeration
+        // incl. MICROSAT and MINISAT (default pre=1), which must use the non-incremental enumeration
         for (solver in Solver.entries) {
             val events = runAll(SolveRequest(solver, Mode.ALL, STARTER_EXAMPLE))
             val solutions = events.filterIsInstance<SolveEvent.SolutionFound>()

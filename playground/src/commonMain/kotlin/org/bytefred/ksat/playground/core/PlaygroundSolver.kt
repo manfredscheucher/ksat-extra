@@ -16,7 +16,7 @@ object PlaygroundSolver {
     /**
      * Parse the DIMACS text, then solve. One-solution mode: a single solve. All-solutions mode:
      * ksat's [enumerateModels] (blocking clauses), incremental where the facade allows it (not for
-     * MICROSAT and MINISAT_SIMP), with [isCancelled] checked after each solution: once it is true,
+     * MICROSAT, and not for MINISAT with option pre=1, its default; no options are passed), with [isCancelled] checked after each solution: once it is true,
      * the run ends without a [SolveEvent.Finished]. A solve that is already running cannot be
      * interrupted through the ksat facade.
      */
@@ -40,7 +40,7 @@ object PlaygroundSolver {
                 }
             }
             Mode.ALL -> {
-                val incremental = request.solver != Solver.MICROSAT && request.solver != Solver.MINISAT_SIMP
+                val incremental = request.solver != Solver.MICROSAT && request.solver != Solver.MINISAT
                 var count = 0
                 for (model in enumerateModels(request.solver, cnf.numVars, cnf.clauses, incremental = incremental)) {
                     count++
