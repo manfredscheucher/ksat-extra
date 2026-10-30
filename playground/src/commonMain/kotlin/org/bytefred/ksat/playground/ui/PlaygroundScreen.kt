@@ -1,6 +1,7 @@
 package org.bytefred.ksat.playground.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -25,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -40,13 +42,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import org.bytefred.ksat.facade.OptionType
 import org.bytefred.ksat.facade.Solver
 import org.bytefred.ksat.facade.SolverOption
 import org.bytefred.ksat.facade.solverOptions
+import org.bytefred.ksat.playground.GeneratedBuildInfo
 import org.bytefred.ksat.playground.core.Example
 import org.bytefred.ksat.playground.core.Mode
 import org.bytefred.ksat.playground.core.formatOptionValue
@@ -65,10 +70,14 @@ private val WIDE_LAYOUT = 840.dp
 fun PlaygroundScreen(vm: PlaygroundViewModel) {
     var showExamples by remember { mutableStateOf(false) }
     var showOptions by remember { mutableStateOf(false) }
+    var showAbout by remember { mutableStateOf(false) }
     val loadFile = rememberFileLoader(onLoaded = { vm.dimacs = it }, onFailed = vm::logError)
 
     Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("ksat playground", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("ksat playground", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            OutlinedButton(onClick = { showAbout = true }) { Text("About") }
+        }
         Controls(vm, onExamples = { showExamples = true }, onLoadFile = loadFile, onOptions = { showOptions = true })
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
             if (maxWidth >= WIDE_LAYOUT) {
@@ -87,6 +96,7 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
 
     if (showExamples) ExamplesDialog(vm, onClose = { showExamples = false })
     if (showOptions) OptionsDialog(vm, onClose = { showOptions = false })
+    if (showAbout) AboutDialog(onLinkFailed = vm::logError, onClose = { showAbout = false })
 }
 
 @Composable
@@ -300,4 +310,67 @@ private fun OptionRow(vm: PlaygroundViewModel, solver: Solver, option: SolverOpt
             style = MaterialTheme.typography.bodySmall,
         )
     }
+}
+
+/** About: build identity, the two repos, license. Modeled on ktoy's About. */
+@Composable
+private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text("About ksat playground") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                val sha = GeneratedBuildInfo.COMMIT_SHA
+                if (sha != "unknown") {
+                    val tag = if (GeneratedBuildInfo.IS_DIRTY == "dirty") "$sha (modified)" else sha
+                    Text("commit $tag")
+                }
+                if (GeneratedBuildInfo.COMMIT_DATE != "unknown") {
+                    Text("committed ${GeneratedBuildInfo.COMMIT_DATE}")
+                }
+                Text("built ${GeneratedBuildInfo.BUILD_DATE}")
+                Spacer(Modifier.height(8.dp))
+                Text("Solve DIMACS CNF formulas with the ksat SAT solvers.")
+                Spacer(Modifier.height(8.dp))
+                Row {
+                    LinkText("ksat-extra on GitHub", "https://github.com/manfredscheucher/ksat-extra", onLinkFailed)
+                    Text(" (playground, demos, website)", Modifier.padding(vertical = 2.dp))
+                }
+                Row {
+                    LinkText("ksat on GitHub", "https://github.com/manfredscheucher/sat-solvers-kotlin", onLinkFailed)
+                    Text(" (the interface with the solvers)", Modifier.padding(vertical = 2.dp))
+                }
+                Spacer(Modifier.height(8.dp))
+                Text("License", fontWeight = FontWeight.Bold)
+                LinkText(
+                    "ksat-extra is MIT-licensed (LICENSE)",
+                    "https://github.com/manfredscheucher/ksat-extra/blob/main/LICENSE",
+                    onLinkFailed,
+                )
+                Text("Font: DejaVu Sans Mono (Bitstream Vera license, DejaVu changes public domain).")
+            }
+        },
+        confirmButton = { TextButton(onClick = onClose) { Text("OK") } },
+    )
+}
+
+/**
+ * A clickable, underlined link that opens [url] in the browser. Android throws when no browser is
+ * installed, the JVM when the desktop can't browse: then [onFailed] reports it (the output shows it).
+ */
+@Composable
+private fun LinkText(label: String, url: String, onFailed: (String) -> Unit) {
+    val uri = LocalUriHandler.current
+    Text(
+        label,
+        style = LocalTextStyle.current.copy(textDecoration = TextDecoration.Underline),
+        color = Color(0xFF1A4FB0),
+        modifier = Modifier.clickable {
+            try {
+                uri.openUri(url)
+            } catch (e: Exception) {
+                onFailed("cannot open $url: ${e.message ?: e}")
+            }
+        }.padding(vertical = 2.dp),
+    )
 }

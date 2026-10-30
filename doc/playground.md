@@ -190,3 +190,29 @@ Answers to Claude's questions (same day):
   `generate <EXAMPLE> <values...>` -> `generated` + newline + DIMACS, or `failed <message>`.
 - The "XOR demo" link is gone, so the web/JVM/Android `xorDemoLink` platform value is gone too;
   README, `scripts/README.md` and `deployPages.sh` no longer mention `xor-demo/`.
+
+## Revision 2 (Manfred, 2026-10-30): About
+
+- Large example parameters without a cap or warning: fine as is.
+- "ich hätt aber auch gern noch nen link auf das repo ksat bzw ksat-extra, vlt ähnlich wie das
+  info menü wie bei ktoy anzeigen; im wesentlichen verweise auf ksat-extra, weil der code halt dort
+  liegt mit den demos bzw der website, und ksat eigentlich das interface ist mit solvern (musst
+  hier aber keine weiteren repos linken, nur die beiden)".
+- Claude: an "About" button in the header opens a dialog like ktoy's About: commit (with
+  "(modified)" when dirty), commit date, build date (no version, as in ktoy/PoCoView), one line on
+  what the playground is, then the links: ksat-extra (https://github.com/manfredscheucher/ksat-extra,
+  the playground, demos and website) first, ksat (https://github.com/manfredscheucher/sat-solvers-kotlin,
+  the interface with the solvers) second; license line as in ktoy (MIT, link to LICENSE; DejaVu Sans
+  Mono font note). No other repos.
+
+Made while building (Claude):
+
+- The About button is an `OutlinedButton` next to the title; the dialog is titled
+  "About ksat playground". The one line: "Solve DIMACS CNF formulas with the ksat SAT solvers."
+- Each repo link is followed by its role as plain text: "ksat-extra on GitHub (playground, demos,
+  website)", "ksat on GitHub (the interface with the solvers)".
+- `generateBuildInfo` is PoCoView's task, with one change: ksat-extra is a submodule, so its `.git`
+  is a file (`gitdir: ...`); the task resolves it to the real git dir and runs git in the
+  ksat-extra root (new `workDir` property). The commit shown is ksat-extra's.
+- ktoy swallows a failing link (no browser); here the failure is written to the output as an
+  `error:` line instead, so it is not silent.
