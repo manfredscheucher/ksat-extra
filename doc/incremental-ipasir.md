@@ -129,8 +129,8 @@ assumptions. Expected verdicts come from brute force.
 ## Incremental enumeration
 
 `enumerateModels(..., incremental = true)` was MINISAT-only because CaDiCaL/kissat could not add
-clauses after a solve. That is fixed, so it is now allowed for MINISAT, CADICAL and KISSAT;
-MICROSAT still throws (see TODO.md).
+clauses after a solve. That is fixed, so it is now allowed for MINISAT (with `pre=0`, see
+`solver-options.md`), CADICAL and KISSAT; MICROSAT still throws (see TODO.md).
 
 ## Verification per step
 

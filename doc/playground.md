@@ -100,3 +100,48 @@ Answers to Claude's questions (same day):
 - Tests: commonTest unit tests (PHP generator, solver run incl. every solver, worker protocol,
   formatting, the ViewModel state machine with a fake solver service). No Compose UI test, as ktoy
   has none.
+
+## Revision 1 (Manfred, 2026-10-30)
+
+- "click to show" toggles all solutions at once (show all / hide all); per-solution toggling makes no
+  sense.
+- Do not call the output a "console" (it is interactive show/hide, not a console).
+- No timer at the top. Instead the end of a run gets its own line, the same in one- and
+  all-solutions mode: `terminated after X` (not `stop.`). Duration format: Claude to look at what
+  is standard (e.g. ms / s / a days-hours-minutes-seconds-ms breakdown); Manfred has no fixed format.
+- All-solutions mode: an extra line `no more solutions.` before the `terminated after` line.
+- No "Clear" button: clicking Solve clears the output automatically.
+- Examples: add Ramsey numbers; no parameter bounds (PHP neither).
+- Examples dialog: radio buttons, one per example; selecting one shows its parameters; a
+  "Generate" button next to Cancel creates the instance.
+- Example texts (Manfred's draft, terminology open for review):
+  - Example 1: choose exactly k of n objects (n choose k solutions). Params k (sample size),
+    n (number of objects), default k=2, n=4. Description: every (k+1)-subset must contain a false
+    (if k<n), C(n,k+1) constraints; "every (k-1)-subset must contain a true (if k>1), C(n,k-1)
+    constraints".
+  - Example 2 (Pigeonhole Principle): pack n+1 pigeons into n holes (UNSAT). Param n (number of
+    holes). Description in the same style, with constraint counts.
+  - Example 3 (Ramsey Numbers on Graphs): construct an n-vertex graph with no k-clique and no
+    l-anticlique. Params n, k, l ("by default 3,3"). Description: C(n,2) edge variables; every
+    k-subset of vertices (C(k,2) edges) has a false edge (no clique); every l-subset has a true
+    edge (no anticlique).
+
+Answers to Claude's questions (same day):
+
+- Example 1 at-least part: for every (k-1)-subset T, some object outside T is true
+  (C(n,k-1) clauses, also for k=1, where T is empty: one clause over all n objects). So there are
+  always C(n,k) solutions; k>n is UNSAT (empty clause).
+- Ramsey: default n=6, k=3, l=3 (UNSAT, R(3,3)=6); term "independent set" (not "anticlique").
+- Duration: Kotlin `Duration.toString()` style, rounded to ms (`412ms`, `3.412s`, `1m 3.412s`).
+- Show/hide all solutions: a toggle button next to Solve.
+- PHP default n: not specified, keeps the earlier 5 (Claude).
+- Solver dropdown: only one MiniSat. Solver features are chosen by options instead (see
+  `solver-options.md`): an "Options" button shows the options of the selected solver.
+- (later, same day) "xor-demo kannst rauswerfen, die demo braucht nicht auf die website; also nicht
+  in der form. kannst ja example 0: XOR machn ohne parameter": the XOR demo is no longer deployed
+  to GitHub Pages (the `demo/` module itself stays in the repo; the playground's "XOR demo" link
+  goes). New Example 0: XOR, no parameters, as in the demo: XOR(x1, x2) = (x1 ∨ x2) ∧ (¬x1 ∨ ¬x2),
+  2 variables, 2 clauses, 2 solutions. The starter text in the editor stays as it is.
+- Example 0 description: just note "2 solutions"; it is trivial. In general: keep the example texts
+  uniform and short; nothing simple gets extra text just so that there is text (check with a
+  reviewer).

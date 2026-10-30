@@ -18,7 +18,7 @@ options of the selected solver.
 
 ## Decisions (Claude's recommendations, accepted by Manfred: "mach mal")
 
-- `Ksat(solver, numVars, options: Map<String, Int> = emptyMap())`; `enumerateModels` takes the same
+- `Ksat(solver, numVars, options: Map<String, Number> = emptyMap())`; `enumerateModels` takes the same
   `options`. Option names are the upstream names.
 - `Solver.MINISAT_SIMP` is removed. MiniSat: option `pre` (0/1, the upstream binary's switch):
   `pre=1` builds MiniSat's `SimpSolver`, otherwise the core `Solver`.
