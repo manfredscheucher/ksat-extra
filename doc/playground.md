@@ -225,3 +225,17 @@ Made while building (Claude):
 - Claude: Generate while a run is going opens "A computation is still running. Stop it and load the
   new example?" with "Stop and load" (stops the run, then generates) and "Cancel" (back to the
   Examples dialog). A generated example always clears the output. Load file is unchanged (not asked).
+
+## Revision 4 (Manfred, 2026-10-30): title, about text, repo renamed
+
+- Main repo renamed on GitHub: https://github.com/manfredscheucher/ksat (was sat-solvers-kotlin); all
+  links updated.
+- Title (option B of Claude's/reviewer's proposals): header stays "ksat playground"; on the web only
+  a subtitle "SAT solvers ported to Kotlin, running in your browser" (the app also runs on JVM and
+  Android, where "in your browser" would be wrong). Browser tab: "ksat playground: SAT solvers in
+  your browser".
+- About text (Manfred: "Kotlin Multiplatform ports of state-of-the-art SAT solvers (list). Runs on
+  JVM, Android, iOS, ...", short): "Kotlin Multiplatform ports of state-of-the-art SAT solvers
+  (MiniSat, CaDiCaL, kissat, MicroSAT). Runs on JVM, Android, iOS, native and in the browser." It
+  replaces the About dialog's line "Solve DIMACS CNF formulas with the ksat SAT solvers." and is
+  also the GitHub About text for the ksat repo.

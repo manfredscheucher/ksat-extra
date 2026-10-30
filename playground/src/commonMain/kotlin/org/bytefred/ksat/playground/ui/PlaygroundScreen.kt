@@ -78,6 +78,7 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
             Text("ksat playground", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             OutlinedButton(onClick = { showAbout = true }) { Text("About") }
         }
+        if (isWeb) Text("SAT solvers ported to Kotlin, running in your browser", style = MaterialTheme.typography.bodyMedium)
         Controls(vm, onExamples = { showExamples = true }, onLoadFile = loadFile, onOptions = { showOptions = true })
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
             if (maxWidth >= WIDE_LAYOUT) {
@@ -348,7 +349,7 @@ private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
                 }
                 Text("built ${GeneratedBuildInfo.BUILD_DATE}")
                 Spacer(Modifier.height(8.dp))
-                Text("Solve DIMACS CNF formulas with the ksat SAT solvers.")
+                Text("Kotlin Multiplatform ports of state-of-the-art SAT solvers (MiniSat, CaDiCaL, kissat, MicroSAT). Runs on JVM, Android, iOS, native and in the browser.")
                 Spacer(Modifier.height(8.dp))
                 Row {
                     LinkText("ksat-extra on GitHub", "https://github.com/manfredscheucher/ksat-extra", onLinkFailed)

@@ -35,3 +35,5 @@ actual fun rememberFileLoader(onLoaded: (text: String) -> Unit, onFailed: (messa
         if (text != null) onLoaded(text)
     }
 }
+
+actual val isWeb: Boolean = false

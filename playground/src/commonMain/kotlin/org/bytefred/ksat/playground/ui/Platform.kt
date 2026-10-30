@@ -9,3 +9,6 @@ import androidx.compose.runtime.Composable
  */
 @Composable
 expect fun rememberFileLoader(onLoaded: (text: String) -> Unit, onFailed: (message: String) -> Unit): () -> Unit
+
+/** True in the browser build: the header then shows the web-only subtitle. */
+expect val isWeb: Boolean

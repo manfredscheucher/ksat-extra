@@ -43,3 +43,5 @@ actual fun rememberFileLoader(onLoaded: (text: String) -> Unit, onFailed: (messa
     // DIMACS has no registered MIME type; accept anything (the parser rejects non-CNF text loudly).
     return remember(launcher) { { launcher.launch(arrayOf("*/*")) } }
 }
+
+actual val isWeb: Boolean = false

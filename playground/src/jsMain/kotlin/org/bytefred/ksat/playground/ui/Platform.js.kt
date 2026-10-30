@@ -128,3 +128,5 @@ actual fun rememberFileLoader(onLoaded: (text: String) -> Unit, onFailed: (messa
     }
     input.click()
 }
+
+actual val isWeb: Boolean = true
