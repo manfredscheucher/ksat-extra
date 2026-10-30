@@ -346,6 +346,7 @@ private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the solver ports", onLinkFailed)
                 ProjectLine("ksat-extra", "https://github.com/manfredscheucher/ksat-extra", "this playground, benchmarks and website", onLinkFailed)
+                Text("The original solvers are MIT-licensed too.", Modifier.padding(vertical = 2.dp))
                 Spacer(Modifier.height(8.dp))
                 val build = buildList {
                     val sha = GeneratedBuildInfo.COMMIT_SHA

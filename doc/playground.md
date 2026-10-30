@@ -245,5 +245,6 @@ Made while building (Claude):
   very bottom, license next to each repo, an early-development feedback box as in ktoy, same
   structure in ksat playground, ktoy and PoCoView; wording from a fresh reviewer): description;
   yellow box "ksat is in early development. Feedback is very welcome: <e-mail>"; "[ksat] (MIT): the
-  solver ports"; "[ksat-extra] (MIT): this playground, benchmarks and website"; one small grey line
+  solver ports"; "[ksat-extra] (MIT): this playground, benchmarks and website"; "The original solvers
+  are MIT-licensed too." (Manfred: fine to mention, the ksat repo has the details); one small grey line
   "sha · committed ... · built ..." at the bottom.
