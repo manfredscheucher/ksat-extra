@@ -339,34 +339,35 @@ private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
         title = { Text("About ksat playground") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                val sha = GeneratedBuildInfo.COMMIT_SHA
-                if (sha != "unknown") {
-                    val tag = if (GeneratedBuildInfo.IS_DIRTY == "dirty") "$sha (modified)" else sha
-                    Text("commit $tag")
-                }
-                if (GeneratedBuildInfo.COMMIT_DATE != "unknown") {
-                    Text("committed ${GeneratedBuildInfo.COMMIT_DATE}")
-                }
-                Text("built ${GeneratedBuildInfo.BUILD_DATE}")
-                Spacer(Modifier.height(8.dp))
                 Text("Kotlin Multiplatform ports of state-of-the-art SAT solvers (MiniSat, CaDiCaL, kissat, MicroSAT). Runs on JVM, Android, iOS, native and in the browser.")
                 Spacer(Modifier.height(8.dp))
+                Text("Source code (MIT license):")
                 Row {
-                    LinkText("ksat-extra on GitHub", "https://github.com/manfredscheucher/ksat-extra", onLinkFailed)
-                    Text(" (playground, demos, website)", Modifier.padding(vertical = 2.dp))
+                    LinkText("ksat", "https://github.com/manfredscheucher/ksat", onLinkFailed)
+                    Text("  the solver ports", Modifier.padding(vertical = 2.dp))
                 }
                 Row {
-                    LinkText("ksat on GitHub", "https://github.com/manfredscheucher/ksat", onLinkFailed)
-                    Text(" (the interface with the solvers)", Modifier.padding(vertical = 2.dp))
+                    LinkText("ksat-extra", "https://github.com/manfredscheucher/ksat-extra", onLinkFailed)
+                    Text("  this playground, benchmarks and website", Modifier.padding(vertical = 2.dp))
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("License", fontWeight = FontWeight.Bold)
-                LinkText(
-                    "ksat-extra is MIT-licensed (LICENSE)",
-                    "https://github.com/manfredscheucher/ksat-extra/blob/main/LICENSE",
-                    onLinkFailed,
+                Row {
+                    Text("Uses the DejaVu Sans Mono font (", Modifier.padding(vertical = 2.dp))
+                    LinkText("license", "https://github.com/manfredscheucher/ksat-extra/blob/main/licenses/dejavu-LICENSE.txt", onLinkFailed)
+                    Text(").", Modifier.padding(vertical = 2.dp))
+                }
+                Spacer(Modifier.height(8.dp))
+                val build = buildList {
+                    val sha = GeneratedBuildInfo.COMMIT_SHA
+                    if (sha != "unknown") add(if (GeneratedBuildInfo.IS_DIRTY == "dirty") "$sha (modified)" else sha)
+                    if (GeneratedBuildInfo.COMMIT_DATE != "unknown") add("committed ${GeneratedBuildInfo.COMMIT_DATE}")
+                    add("built ${GeneratedBuildInfo.BUILD_DATE}")
+                }
+                Text(
+                    build.joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Text("Font: DejaVu Sans Mono (Bitstream Vera license, DejaVu changes public domain).")
             }
         },
         confirmButton = { TextButton(onClick = onClose) { Text("OK") } },

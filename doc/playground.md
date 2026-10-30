@@ -241,3 +241,8 @@ Made while building (Claude):
   also the GitHub About text for the ksat repo.
 - Subtitle moved into the top row (Manfred: "subtitle in die top zeile"): title, subtitle, About
   button; the subtitle wraps on narrow screens.
+- About dialog reworked (Manfred: font is not a license item, build info at the very bottom, MIT
+  for both repos, text read robotic; wording from a fresh reviewer): description; "Source code (MIT
+  license):" with links ksat (the solver ports) and ksat-extra (this playground, benchmarks and
+  website); "Uses the DejaVu Sans Mono font (license)" linking licenses/dejavu-LICENSE.txt; one small
+  grey line "sha · committed ... · built ..." at the bottom.
