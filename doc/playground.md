@@ -239,3 +239,5 @@ Made while building (Claude):
   (MiniSat, CaDiCaL, kissat, MicroSAT). Runs on JVM, Android, iOS, native and in the browser." It
   replaces the About dialog's line "Solve DIMACS CNF formulas with the ksat SAT solvers." and is
   also the GitHub About text for the ksat repo.
+- Subtitle moved into the top row (Manfred: "subtitle in die top zeile"): title, subtitle, About
+  button; the subtitle wraps on narrow screens.

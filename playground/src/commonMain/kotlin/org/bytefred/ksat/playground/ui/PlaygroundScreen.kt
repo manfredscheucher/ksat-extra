@@ -76,9 +76,9 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
     Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("ksat playground", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            if (isWeb) Text("SAT solvers ported to Kotlin, running in your browser", Modifier.weight(1f, fill = false), style = MaterialTheme.typography.bodyMedium)
             OutlinedButton(onClick = { showAbout = true }) { Text("About") }
         }
-        if (isWeb) Text("SAT solvers ported to Kotlin, running in your browser", style = MaterialTheme.typography.bodyMedium)
         Controls(vm, onExamples = { showExamples = true }, onLoadFile = loadFile, onOptions = { showOptions = true })
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
             if (maxWidth >= WIDE_LAYOUT) {
