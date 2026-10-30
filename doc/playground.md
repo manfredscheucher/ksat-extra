@@ -201,7 +201,7 @@ Answers to Claude's questions (same day):
 - Claude: an "About" button in the header opens a dialog like ktoy's About: commit (with
   "(modified)" when dirty), commit date, build date (no version, as in ktoy/PoCoView), one line on
   what the playground is, then the links: ksat-extra (https://github.com/manfredscheucher/ksat-extra,
-  the playground, demos and website) first, ksat (https://github.com/manfredscheucher/sat-solvers-kotlin,
+  the playground, demos and website) first, ksat (https://github.com/manfredscheucher/ksat,
   the interface with the solvers) second; license line as in ktoy (MIT, link to LICENSE; DejaVu Sans
   Mono font note). No other repos.
 

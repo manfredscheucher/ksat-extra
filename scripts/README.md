@@ -4,7 +4,7 @@ Convenience launchers for the multiplatform ksat demo (`demo/`) and the interact
 (`playground/`). Each demo script runs the same demo (enumerate all models of XOR(x1,x2), then
 UNSAT) on a different target.
 
-Prerequisite: `ksat-extra` must be checked out inside the `sat-solvers-kotlin` main repo
+Prerequisite: `ksat-extra` must be checked out inside the `ksat` main repo
 (the demo builds against `../ksat`). See the repo README's "Extras" section.
 
 | Script | Target | Notes |

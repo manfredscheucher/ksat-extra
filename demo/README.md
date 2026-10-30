@@ -23,7 +23,7 @@ no other solutions (UNSAT).
 ## Prerequisite
 
 The demo consumes the solver from the main repo via relative paths, so it only builds when
-`ksat-extra` is checked out **inside** `sat-solvers-kotlin` (the normal case):
+`ksat-extra` is checked out **inside** the `ksat` main repo (the normal case):
 
 ```bash
 # from the main repo

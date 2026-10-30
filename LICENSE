@@ -3,7 +3,7 @@ MIT License
 Copyright (c) 2026 Manfred Scheucher
 
 This repository holds the shadow/verification and benchmark material for
-sat-solvers-kotlin: the instrumented C/C++ trace references, the test CNFs, the
+ksat: the instrumented C/C++ trace references, the test CNFs, the
 benchmark data, and the scripts. The scripts and the instrumented trace files
 (*_trace.*) are released under the MIT License below.
 

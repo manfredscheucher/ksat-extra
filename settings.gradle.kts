@@ -28,12 +28,12 @@ dependencyResolutionManagement {
 }
 
 // The demo consumes the ksat solver from the MAIN repo via relative paths. This only works
-// when ksat-extra is checked out as the ksat-extra/ submodule INSIDE sat-solvers-kotlin
+// when ksat-extra is checked out as the ksat-extra/ submodule INSIDE the ksat main repo
 // (the normal case). A standalone clone of ksat-extra on its own cannot resolve these.
 val main = file("..")
 require(file("$main/ksat/build.gradle.kts").exists()) {
     "ksat solver not found at ${main.absolutePath}. The demo needs ksat-extra to be checked " +
-        "out inside the sat-solvers-kotlin main repo (git submodule update --init --checkout ksat-extra)."
+        "out inside the ksat main repo (git submodule update --init --checkout ksat-extra)."
 }
 
 include(":ksat-common")

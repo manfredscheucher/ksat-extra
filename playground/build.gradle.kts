@@ -180,7 +180,7 @@ abstract class GenerateBuildInfo @Inject constructor(
 }
 
 val generateBuildInfo = tasks.register("generateBuildInfo", GenerateBuildInfo::class.java) {
-    // ksat-extra is a submodule of sat-solvers-kotlin, so its .git is a file ("gitdir: <path>")
+    // ksat-extra is a submodule of the ksat main repo, so its .git is a file ("gitdir: <path>")
     // that points at the real git dir; a standalone clone has a plain .git directory.
     val dotGit = rootProject.layout.projectDirectory.file(".git").asFile
     val gitDirFile = if (dotGit.isFile) {

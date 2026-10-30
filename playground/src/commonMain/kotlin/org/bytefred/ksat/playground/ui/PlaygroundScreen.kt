@@ -355,7 +355,7 @@ private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
                     Text(" (playground, demos, website)", Modifier.padding(vertical = 2.dp))
                 }
                 Row {
-                    LinkText("ksat on GitHub", "https://github.com/manfredscheucher/sat-solvers-kotlin", onLinkFailed)
+                    LinkText("ksat on GitHub", "https://github.com/manfredscheucher/ksat", onLinkFailed)
                     Text(" (the interface with the solvers)", Modifier.padding(vertical = 2.dp))
                 }
                 Spacer(Modifier.height(8.dp))

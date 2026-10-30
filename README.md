@@ -1,6 +1,6 @@
 # ksat-extra
 
-Extra material for [sat-solvers-kotlin](https://github.com/manfredscheucher/sat-solvers-kotlin):
+Extra material for [ksat](https://github.com/manfredscheucher/ksat):
 a multiplatform demo, an interactive playground, runtime benchmarks, docs, and the shadowing harness. Its own repo so the
 main one stays small; an optional submodule there, NOT pulled by default.
 
@@ -8,8 +8,8 @@ Clone the main repo recursively, then add this submodule (`--recursive` alone sk
 it's optional):
 
 ```bash
-git clone --recursive https://github.com/manfredscheucher/sat-solvers-kotlin.git
-cd sat-solvers-kotlin
+git clone --recursive https://github.com/manfredscheucher/ksat.git
+cd ksat
 git submodule update --init --checkout ksat-extra
 ```
 

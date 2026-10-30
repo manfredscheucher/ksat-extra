@@ -1,7 +1,7 @@
 #import "lib/template.typ": ks-doc, note, warn
 
 #show: body => ks-doc(
-  title: "ksat / sat-solvers-kotlin",
+  title: "ksat",
   subtitle: "MiniSat runtime: C vs Kotlin/JVM vs Kotlin/Native",
   version: "Measured, not estimated",
   body,

@@ -1,4 +1,4 @@
-# doc/ — sat-solvers-kotlin
+# doc/ — ksat
 
 **What "shadowing" means here:** to check a Kotlin port really behaves like its C original (not
 just that it answers SAT/UNSAT), an instrumented build of BOTH prints a trace — every decision,
