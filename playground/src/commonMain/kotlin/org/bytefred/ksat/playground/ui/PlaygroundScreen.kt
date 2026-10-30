@@ -337,7 +337,7 @@ private fun OptionRow(vm: PlaygroundViewModel, solver: Solver, option: SolverOpt
 private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
     AlertDialog(
         onDismissRequest = onClose,
-        title = { Text("About ksat playground") },
+        title = { Text("ksat playground") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text("Kotlin Multiplatform ports of state-of-the-art SAT solvers (MiniSat, CaDiCaL, kissat, MicroSAT). Runs on JVM, Android, iOS, native and in the browser.")
