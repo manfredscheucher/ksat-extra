@@ -264,3 +264,7 @@ Made while building (Claude):
 - Controls in two rows (Manfred): Examples, Load file, Solver, Options, About; then one/all
   solutions, Solve, Show solutions, Stop. The About button moved from the title row to the right
   of Options.
+- New example (Manfred): "Example 4 (Graph Coloring): 2-color a cycle of length n". Presets n=3 ..
+  n=10, custom n (number of vertices, default 4, Claude's choice). One variable per vertex,
+  (xi ∨ xj) ∧ (¬xi ∨ ¬xj) per edge: 2n clauses. Expected behavior: UNSAT for odd n, 2 solutions for
+  even n (n=0: 1 solution, the empty formula).

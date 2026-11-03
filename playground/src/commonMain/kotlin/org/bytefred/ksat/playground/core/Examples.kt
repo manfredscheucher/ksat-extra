@@ -57,6 +57,12 @@ enum class Example(
         listOf(Triple(3, 3, 5), Triple(3, 4, 8), Triple(3, 5, 13), Triple(4, 4, 17)).map { (k, l, n) ->
             listOf(n, n + 1).map { ExamplePreset("R($k,$l) > $it", listOf(it, k, l)) }
         },
+    ),
+    CYCLE_COLORING(
+        "Example 4 (Graph Coloring): 2-color a cycle of length n",
+        listOf(ExampleParam("n", "number of vertices", 4)),
+        "One variable per vertex (its color). Adjacent vertices get different colors: 2n clauses.",
+        listOf((3..10).map { ExamplePreset("n=$it", listOf(it)) }),
     );
 
     /**
@@ -75,6 +81,7 @@ enum class Example(
             EXACTLY_K_OF_N -> exactlyKOfN(comment, values[0], values[1], checkCancelled)
             PIGEONHOLE -> pigeonhole(comment, values[0], checkCancelled)
             RAMSEY -> ramsey(comment, values[0], values[1], values[2], checkCancelled)
+            CYCLE_COLORING -> cycleColoring(comment, values[0], checkCancelled)
         }
     }
 
@@ -93,6 +100,14 @@ enum class Example(
                 r == null -> "SAT if and only if R($k,$l) > $n"
                 n < r -> "SAT"
                 else -> "UNSAT"
+            }
+        }
+        CYCLE_COLORING -> {
+            val n = values[0]
+            when {
+                n == 0 -> "1 solution"
+                n % 2 == 1 -> "UNSAT"
+                else -> "2 solutions"
             }
         }
     }
@@ -193,6 +208,20 @@ private fun pigeonhole(comment: String, n: Int, checkCancelled: () -> Unit): Str
         for (j in 0 until n) forEachSubset(n + 1, 2) { (a, b) -> add(-p(a, j), -p(b, j)) }
     }
 }
+
+/**
+ * 2-coloring of the cycle 1, 2, ..., n, 1: variable i = color of vertex i, each edge {i, j} gives
+ * (xi ∨ xj) ∧ (¬xi ∨ ¬xj). n = 2 has the single edge {1, 2}; n = 1 is a loop (UNSAT).
+ */
+private fun cycleColoring(comment: String, n: Int, checkCancelled: () -> Unit): String =
+    cnf(comment, n.toLong(), checkCancelled) {
+        val edges = if (n == 2) 1 else n
+        for (i in 1..edges) {
+            val j = i % n + 1
+            add(i, j)
+            add(-i, -j)
+        }
+    }
 
 /**
  * A graph on n vertices without a k-clique and without an independent set of size l: one variable

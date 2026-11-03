@@ -138,6 +138,18 @@ class ExamplesTest {
         assertEquals("SAT if and only if R(5,5) > 42", Example.RAMSEY.expected(listOf(42, 5, 5)))
     }
 
+    @Test
+    fun cycleColoringPresetsAndSolutions() {
+        assertEquals((3..10).map { "n=$it" }, Example.CYCLE_COLORING.presets.flatten().map { it.label })
+        for (n in 0..10) {
+            val text = Example.CYCLE_COLORING.dimacs(listOf(n))
+            val expected = Example.CYCLE_COLORING.expected(listOf(n))
+            val count = solutions(text)
+            assertEquals(if (expected == "UNSAT") 0 else expected.substringBefore(' ').toInt(), count, "n=$n")
+            if (n >= 3) assertEquals(2 * n, DimacsCnf.parse(text).clauses.size, "n=$n")
+        }
+    }
+
     /** R(k,l) > n is SAT below the Ramsey number and UNSAT at it (small cases only). */
     @Test
     fun smallRamseyPresetsAreSatThenUnsat() {
