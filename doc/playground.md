@@ -248,3 +248,19 @@ Made while building (Claude):
   solver ports"; "[ksat-extra] (MIT): this playground, benchmarks and website"; "The original solvers
   are MIT-licensed too." (Manfred: fine to mention, the ksat repo has the details); one small grey line
   "sha · committed ... · built ..." at the bottom.
+
+## Revision 5 (Manfred, 2026-11-03): presets, expected behavior
+
+- Ramsey and PHP get fixed parameter choices as radio buttons, plus "custom" which shows the number
+  fields. Ramsey, two per row: R(3,3) > 5, R(3,3) > 6 / R(3,4) > 8, R(3,4) > 9 / R(3,5) > 13,
+  R(3,5) > 14 / R(4,4) > 17, R(4,4) > 18 ("R(k,l) > n" = n vertices, k-clique, independent l-set).
+  PHP: n=3 .. n=9 side by side (wrapping). The preset matching the old defaults is preselected
+  (R(3,3) > 6, n=5). Examples 0 and 1 have no presets (not asked for).
+- The solution info is removed from the titles; the selected example shows "expected behavior: ..."
+  for its current values, and the generated CNF has the same as a `c expected behavior: ...` line
+  (Claude's choice, so it is visible after loading). XOR: 2 solutions; k of n: "C(n,k) = X
+  solutions"; PHP: UNSAT; Ramsey: SAT / UNSAT from R(3,3)=6, R(3,4)=9, R(3,5)=14, R(4,4)=18,
+  otherwise "SAT if and only if R(k,l) > n".
+- Controls in two rows (Manfred): Examples, Load file, Solver, Options, About; then one/all
+  solutions, Solve, Show solutions, Stop. The About button moved from the title row to the right
+  of Options.

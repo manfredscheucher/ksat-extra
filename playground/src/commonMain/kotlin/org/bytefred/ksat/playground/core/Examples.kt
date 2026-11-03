@@ -12,26 +12,37 @@ p cnf 3 4
 /** A parameter of an [Example]: its name, what it means, and its default value. */
 class ExampleParam(val name: String, val meaning: String, val default: Int)
 
+/** A fixed choice of parameter values for an [Example], shown as a radio button with [label]. */
+class ExamplePreset(val label: String, val values: List<Int>)
+
 /**
  * The generated examples of the Examples dialog, each with its parameters and a short description
  * (doc/playground.md, Revision 1). No parameter bounds: every non-negative value generates a CNF.
+ * [presets] are fixed parameter choices, grouped into rows (doc/playground.md, Revision 5); with
+ * presets, the parameter fields appear only for "custom".
  */
-enum class Example(val title: String, val params: List<ExampleParam>, val description: String) {
+enum class Example(
+    val title: String,
+    val params: List<ExampleParam>,
+    val description: String,
+    val presets: List<List<ExamplePreset>> = emptyList(),
+) {
     XOR(
-        "Example 0 (XOR): (x1 ∨ x2) ∧ (¬x1 ∨ ¬x2) (2 solutions)",
+        "Example 0 (XOR): (x1 ∨ x2) ∧ (¬x1 ∨ ¬x2)",
         emptyList(),
         "",
     ),
     EXACTLY_K_OF_N(
-        "Example 1: choose exactly k of n objects (n choose k solutions)",
+        "Example 1: choose exactly k of n objects",
         listOf(ExampleParam("k", "sample size", 2), ExampleParam("n", "number of objects", 4)),
         "Every (k+1)-subset contains a false object: C(n,k+1) clauses. For every (k-1)-subset T, " +
             "some object outside T is true: C(n,k-1) clauses.",
     ),
     PIGEONHOLE(
-        "Example 2 (Pigeonhole Principle): pack n+1 pigeons into n holes (UNSAT)",
+        "Example 2 (Pigeonhole Principle): pack n+1 pigeons into n holes",
         listOf(ExampleParam("n", "number of holes", 5)),
         "Every pigeon sits in a hole: n+1 clauses. No hole holds two pigeons: n·C(n+1,2) clauses.",
+        listOf((3..9).map { ExamplePreset("n=$it", listOf(it)) }),
     ),
     RAMSEY(
         "Example 3 (Ramsey Numbers on Graphs): construct n-vertex graph with no k-clique or independent set of size l",
@@ -42,6 +53,10 @@ enum class Example(val title: String, val params: List<ExampleParam>, val descri
         ),
         "C(n,2) edge variables. Every k-subset of vertices has a missing edge: C(n,k) clauses. " +
             "Every l-subset has an edge: C(n,l) clauses.",
+        // R(k,l) > n: an n-vertex graph with no k-clique and no independent l-set exists
+        listOf(Triple(3, 3, 5), Triple(3, 4, 8), Triple(3, 5, 13), Triple(4, 4, 17)).map { (k, l, n) ->
+            listOf(n, n + 1).map { ExamplePreset("R($k,$l) > $it", listOf(it, k, l)) }
+        },
     );
 
     /**
@@ -52,8 +67,9 @@ enum class Example(val title: String, val params: List<ExampleParam>, val descri
     fun dimacs(values: List<Int>, checkCancelled: () -> Unit = {}): String {
         require(values.size == params.size) { "$name takes ${params.size} parameters, got ${values.size}" }
         for ((p, v) in params.zip(values)) require(v >= 0) { "${p.name} must not be negative, got $v" }
-        val comment = if (params.isEmpty()) title
-        else "$title\nc " + params.zip(values).joinToString(", ") { (p, v) -> "${p.name}=$v" }
+        val comment = (if (params.isEmpty()) title
+        else "$title\nc " + params.zip(values).joinToString(", ") { (p, v) -> "${p.name}=$v" }) +
+            "\nc expected behavior: ${expected(values)}"
         return when (this) {
             XOR -> cnf(comment, 2, checkCancelled) { add(1, 2); add(-1, -2) }
             EXACTLY_K_OF_N -> exactlyKOfN(comment, values[0], values[1], checkCancelled)
@@ -61,6 +77,40 @@ enum class Example(val title: String, val params: List<ExampleParam>, val descri
             RAMSEY -> ramsey(comment, values[0], values[1], values[2], checkCancelled)
         }
     }
+
+    /** What solving the CNF for [values] gives: the number of solutions, SAT or UNSAT. */
+    fun expected(values: List<Int>): String = when (this) {
+        XOR -> "2 solutions"
+        EXACTLY_K_OF_N -> {
+            val (k, n) = values
+            binomial(n, k)?.let { "C($n,$k) = $it solutions" } ?: "C($n,$k) solutions"
+        }
+        PIGEONHOLE -> "UNSAT"
+        RAMSEY -> {
+            val (n, k, l) = values
+            val r = RAMSEY_NUMBERS[k to l] ?: RAMSEY_NUMBERS[l to k]
+            when {
+                r == null -> "SAT if and only if R($k,$l) > $n"
+                n < r -> "SAT"
+                else -> "UNSAT"
+            }
+        }
+    }
+}
+
+/** The Ramsey numbers R(k,l) of the presets. */
+private val RAMSEY_NUMBERS = mapOf(3 to 3 to 6, 3 to 4 to 9, 3 to 5 to 14, 4 to 4 to 18)
+
+/** C(n,k), or null if it does not fit a Long. */
+private fun binomial(n: Int, k: Int): Long? {
+    if (k < 0 || k > n) return 0
+    val m = minOf(k, n - k)
+    var r = 1L
+    for (i in 0 until m) {
+        if (r > Long.MAX_VALUE / (n - i)) return null
+        r = r * (n - i) / (i + 1)
+    }
+    return r
 }
 
 /**

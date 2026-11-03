@@ -28,7 +28,7 @@ class ExamplesTest {
     @Test
     fun xorHasTwoClausesAndTwoSolutions() {
         val text = Example.XOR.dimacs(emptyList())
-        assertTrue(text.startsWith("c ${Example.XOR.title}\np cnf 2 2\n"), text)
+        assertTrue(text.startsWith("c ${Example.XOR.title}\nc expected behavior: 2 solutions\np cnf 2 2\n"), text)
         assertEquals(listOf(listOf(1, 2), listOf(-1, -2)), DimacsCnf.parse(text).clauses.map { it.toList() })
         assertEquals(2, solutions(text))
     }
@@ -36,7 +36,7 @@ class ExamplesTest {
     @Test
     fun headerNamesTheExampleAndItsParameters() {
         val text = Example.RAMSEY.dimacs(listOf(6, 3, 3))
-        assertEquals("c ${Example.RAMSEY.title}\nc n=6, k=3, l=3\n", text.substringBefore("p cnf"))
+        assertEquals("c ${Example.RAMSEY.title}\nc n=6, k=3, l=3\nc expected behavior: UNSAT\n", text.substringBefore("p cnf"))
     }
 
     @Test
@@ -109,6 +109,46 @@ class ExamplesTest {
             Example.PIGEONHOLE.dimacs(listOf(50)) { if (++calls == 10) throw IllegalStateException("cancelled") }
         }
         assertEquals(10, calls)
+    }
+
+    @Test
+    fun presetsAreTheListedOnes() {
+        assertEquals(
+            listOf(
+                listOf("R(3,3) > 5", "R(3,3) > 6"), listOf("R(3,4) > 8", "R(3,4) > 9"),
+                listOf("R(3,5) > 13", "R(3,5) > 14"), listOf("R(4,4) > 17", "R(4,4) > 18"),
+            ),
+            Example.RAMSEY.presets.map { row -> row.map { it.label } },
+        )
+        assertEquals(listOf(6, 3, 3), Example.RAMSEY.presets[0][1].values)
+        assertEquals(listOf(18, 4, 4), Example.RAMSEY.presets[3][1].values)
+        assertEquals((3..9).map { "n=$it" }, Example.PIGEONHOLE.presets.flatten().map { it.label })
+        assertEquals((3..9).map { listOf(it) }, Example.PIGEONHOLE.presets.flatten().map { it.values })
+        assertTrue(Example.XOR.presets.isEmpty() && Example.EXACTLY_K_OF_N.presets.isEmpty())
+    }
+
+    @Test
+    fun expectedBehavior() {
+        assertEquals("C(4,2) = 6 solutions", Example.EXACTLY_K_OF_N.expected(listOf(2, 4)))
+        assertEquals("C(3,5) = 0 solutions", Example.EXACTLY_K_OF_N.expected(listOf(5, 3)))
+        assertEquals("C(1000,500) solutions", Example.EXACTLY_K_OF_N.expected(listOf(500, 1000)))
+        assertEquals("UNSAT", Example.PIGEONHOLE.expected(listOf(5)))
+        assertEquals("SAT", Example.RAMSEY.expected(listOf(13, 3, 5)))
+        assertEquals("UNSAT", Example.RAMSEY.expected(listOf(14, 5, 3)))
+        assertEquals("SAT if and only if R(5,5) > 42", Example.RAMSEY.expected(listOf(42, 5, 5)))
+    }
+
+    /** R(k,l) > n is SAT below the Ramsey number and UNSAT at it (small cases only). */
+    @Test
+    fun smallRamseyPresetsAreSatThenUnsat() {
+        for (row in Example.RAMSEY.presets.take(2)) {
+            val (below, at) = row.map { p ->
+                val events = runAll(SolveRequest(Solver.CADICAL, Mode.ONE, Example.RAMSEY.dimacs(p.values)))
+                events.any { it is SolveEvent.SolutionFound }
+            }
+            assertTrue(below, row[0].label)
+            assertFalse(at, row[1].label)
+        }
     }
 
     @Test
