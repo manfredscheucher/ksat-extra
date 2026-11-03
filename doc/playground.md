@@ -268,3 +268,14 @@ Made while building (Claude):
   n=10, custom n (number of vertices, default 4, Claude's choice). One variable per vertex,
   (xi ∨ xj) ∧ (¬xi ∨ ¬xj) per edge: 2n clauses. Expected behavior: UNSAT for odd n, 2 solutions for
   even n (n=0: 1 solution, the empty formula).
+
+## Revision 6 (Manfred, 2026-11-03): remembered example choice, stop confirm for every action
+
+- The Examples dialog reopens where it was left: selected example, chosen preset / custom values
+  (kept in the view model for the session).
+- While a computation runs, every action that changes the input or the run asks first: Examples,
+  Load file, Solver, Options, one/all solutions, editing the CNF. Dialog "A computation is still
+  running. Stop it to continue?" with "Stop computation" / "Keep running" (Manfred asked for
+  explicit labels instead of yes/no). Stop computation stops the run and then does the action. Not
+  asked for: About, Show/Hide solutions, Stop (they do not change the run). The old confirm inside
+  the Examples dialog (on Generate) is gone, since the dialog cannot open during a run anymore.

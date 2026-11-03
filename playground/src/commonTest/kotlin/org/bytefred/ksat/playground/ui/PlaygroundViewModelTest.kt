@@ -226,6 +226,41 @@ class PlaygroundViewModelTest {
     }
 
     @Test
+    fun actionsWaitForStopWhileRunning() {
+        var done = 0
+        vm.whenStopped { done++ }
+        assertEquals(1, done)
+        assertNull(vm.pendingAction)
+
+        vm.solve()
+        vm.whenStopped { done++ }
+        assertEquals(1, done)
+        vm.cancelPending()
+        assertNull(vm.pendingAction)
+        assertTrue(vm.running)
+        assertEquals(0, service.cancels)
+
+        vm.whenStopped { vm.mode = Mode.ALL }
+        vm.confirmPending()
+        assertFalse(vm.running)
+        assertEquals(1, service.cancels)
+        assertEquals(Mode.ALL, vm.mode)
+        assertNull(vm.pendingAction)
+    }
+
+    @Test
+    fun exampleChoiceIsKept() {
+        assertEquals(Example.XOR, vm.selectedExample)
+        assertEquals(listOf("6", "3", "3"), vm.examplePresets.getValue(Example.RAMSEY).value!!.values.map { "$it" })
+        vm.selectedExample = Example.RAMSEY
+        vm.examplePresets.getValue(Example.RAMSEY).value = null
+        vm.exampleTexts.getValue(Example.RAMSEY)[0].value = "7"
+        assertEquals(listOf("7", "3", "3"), vm.selectedTexts)
+        vm.examplePresets.getValue(Example.RAMSEY).value = Example.RAMSEY.presets[1][0]
+        assertEquals(listOf("8", "3", "4"), vm.selectedTexts)
+    }
+
+    @Test
     fun failedOrTooLargeGenerationIsLogged() {
         var finished = 0
         vm.generate(Example.PIGEONHOLE, listOf("5"), onFinished = { finished++ })

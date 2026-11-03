@@ -1,5 +1,6 @@
 package org.bytefred.ksat.playground.ui
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -10,6 +11,7 @@ import org.bytefred.ksat.facade.Solver
 import org.bytefred.ksat.facade.SolverOption
 import org.bytefred.ksat.facade.solverOptions
 import org.bytefred.ksat.playground.core.Example
+import org.bytefred.ksat.playground.core.ExamplePreset
 import org.bytefred.ksat.playground.core.GenerateRequest
 import org.bytefred.ksat.playground.core.GenerateResult
 import org.bytefred.ksat.playground.core.Mode
@@ -54,6 +56,46 @@ class PlaygroundViewModel(
      * upstream default are passed to the solver ([changedOptions]).
      */
     private val optionEdits = mutableStateMapOf<Solver, Map<String, String>>()
+
+    /**
+     * The Examples dialog's choice, kept for the session so the dialog reopens where it was: the
+     * selected example, per example its parameter texts and its preset (null = custom; starts at
+     * the preset with the default values).
+     */
+    var selectedExample by mutableStateOf(Example.entries.first())
+    val exampleTexts: Map<Example, List<MutableState<String>>> =
+        Example.entries.associateWith { e -> e.params.map { mutableStateOf(it.default.toString()) } }
+    val examplePresets: Map<Example, MutableState<ExamplePreset?>> = Example.entries.associateWith { e ->
+        mutableStateOf(e.presets.flatten().firstOrNull { p -> p.values == e.params.map { it.default } })
+    }
+
+    /** The parameter texts the selected example generates with: its preset's values, or the custom texts. */
+    val selectedTexts: List<String>
+        get() = examplePresets.getValue(selectedExample).value?.values?.map { it.toString() }
+            ?: exampleTexts.getValue(selectedExample).map { it.value }
+
+    /** An action waiting for "Stop the running computation to continue?" ([whenStopped]). */
+    var pendingAction by mutableStateOf<(() -> Unit)?>(null)
+        private set
+
+    /**
+     * Runs [action] now, or, while a computation runs, keeps it until the user confirms stopping
+     * ([confirmPending]) or declines ([cancelPending]).
+     */
+    fun whenStopped(action: () -> Unit) {
+        if (running) pendingAction = action else action()
+    }
+
+    fun confirmPending() {
+        val action = pendingAction ?: return
+        pendingAction = null
+        stop()
+        action()
+    }
+
+    fun cancelPending() {
+        pendingAction = null
+    }
 
     private var runId = 0
     private var startedAt = 0L

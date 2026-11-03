@@ -73,6 +73,14 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
     var showOptions by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
     val loadFile = rememberFileLoader(onLoaded = { vm.dimacs = it }, onFailed = vm::logError)
+    vm.pendingAction?.let {
+        AlertDialog(
+            onDismissRequest = vm::cancelPending,
+            text = { Text("A computation is still running. Stop it to continue?") },
+            confirmButton = { TextButton(onClick = vm::confirmPending) { Text("Stop computation") } },
+            dismissButton = { TextButton(onClick = vm::cancelPending) { Text("Keep running") } },
+        )
+    }
 
     Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -81,9 +89,9 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
         }
         Controls(
             vm,
-            onExamples = { showExamples = true },
-            onLoadFile = loadFile,
-            onOptions = { showOptions = true },
+            onExamples = { vm.whenStopped { showExamples = true } },
+            onLoadFile = { vm.whenStopped(loadFile) },
+            onOptions = { vm.whenStopped { showOptions = true } },
             onAbout = { showAbout = true },
         )
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
@@ -117,14 +125,14 @@ private fun Controls(
     ControlRow {
         OutlinedButton(onClick = onExamples) { Text("Examples") }
         OutlinedButton(onClick = onLoadFile) { Text("Load file") }
-        SolverDropdown(vm.solver, onPick = { vm.solver = it })
+        SolverDropdown(vm.solver, onOpen = vm::whenStopped, onPick = { vm.solver = it })
         OutlinedButton(onClick = onOptions) { Text("Options") }
         OutlinedButton(onClick = onAbout) { Text("About") }
     }
     ControlRow {
         for (mode in Mode.entries) {
             Row(
-                Modifier.selectable(selected = vm.mode == mode, onClick = { vm.mode = mode }, role = Role.RadioButton),
+                Modifier.selectable(selected = vm.mode == mode, onClick = { vm.whenStopped { vm.mode = mode } }, role = Role.RadioButton),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 RadioButton(selected = vm.mode == mode, onClick = null)
@@ -150,10 +158,10 @@ private fun ControlRow(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SolverDropdown(selected: Solver, onPick: (Solver) -> Unit) {
+private fun SolverDropdown(selected: Solver, onOpen: (() -> Unit) -> Unit, onPick: (Solver) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        OutlinedButton(onClick = { expanded = true }) { Text("Solver: ${selected.name}") }
+        OutlinedButton(onClick = { onOpen { expanded = true } }) { Text("Solver: ${selected.name}") }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             for (solver in Solver.entries) {
                 DropdownMenuItem(
@@ -172,7 +180,7 @@ private fun SolverDropdown(selected: Solver, onPick: (Solver) -> Unit) {
 private fun Editor(vm: PlaygroundViewModel, modifier: Modifier) {
     OutlinedTextField(
         value = vm.dimacs,
-        onValueChange = { vm.dimacs = it },
+        onValueChange = { text -> vm.whenStopped { vm.dimacs = text } },
         modifier = modifier,
         label = { Text("DIMACS CNF") },
         textStyle = LocalMonoStyle.current,
@@ -220,31 +228,8 @@ private val OUTPUT_SOLUTION = Color(0xFF9CDCFE)
  */
 @Composable
 private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
-    var selected by remember { mutableStateOf(Example.entries.first()) }
-    val values = remember { Example.entries.associateWith { e -> e.params.map { mutableStateOf(it.default.toString()) } } }
-    // the chosen preset per example, null = custom; starts at the preset with the default values
-    val presets = remember {
-        Example.entries.associateWith { e ->
-            mutableStateOf(e.presets.flatten().firstOrNull { p -> p.values == e.params.map { it.default } })
-        }
-    }
-    val preset = presets.getValue(selected).value
-    val texts = preset?.values?.map { it.toString() } ?: values.getValue(selected).map { it.value }
-    var confirmStop by remember { mutableStateOf(false) }
-    if (confirmStop) {
-        AlertDialog(
-            onDismissRequest = { confirmStop = false },
-            text = { Text("A computation is still running. Stop it and load the new example?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmStop = false
-                    vm.stop()
-                    vm.generate(selected, texts, onFinished = onClose)
-                }) { Text("Stop and load") }
-            },
-            dismissButton = { TextButton(onClick = { confirmStop = false }) { Text("Cancel") } },
-        )
-    }
+    val selected = vm.selectedExample
+    val texts = vm.selectedTexts
     AlertDialog(
         onDismissRequest = {
             vm.cancelGeneration()
@@ -256,7 +241,7 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
                 for (example in Example.entries) {
                     Row(
                         Modifier.fillMaxWidth()
-                            .selectable(selected = example == selected, onClick = { selected = example }, role = Role.RadioButton),
+                            .selectable(selected = example == selected, onClick = { vm.selectedExample = example }, role = Role.RadioButton),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(selected = example == selected, onClick = null)
@@ -264,14 +249,14 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
                     }
                     if (example == selected) {
                         Column(Modifier.padding(start = 40.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            val chosen = presets.getValue(example)
+                            val chosen = vm.examplePresets.getValue(example)
                             for (row in example.presets) {
                                 FlowRow {
                                     for (p in row) SmallRadio(p.label, chosen.value == p, Modifier.width(140.dp)) { chosen.value = p }
                                 }
                             }
                             if (example.presets.isNotEmpty()) SmallRadio("custom", chosen.value == null) { chosen.value = null }
-                            if (chosen.value == null) for ((param, value) in example.params.zip(values.getValue(example))) {
+                            if (chosen.value == null) for ((param, value) in example.params.zip(vm.exampleTexts.getValue(example))) {
                                 OutlinedTextField(
                                     value = value.value,
                                     onValueChange = { value.value = it },
@@ -297,10 +282,7 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
         },
         confirmButton = {
             TextButton(
-                onClick = {
-                    if (vm.running) confirmStop = true
-                    else vm.generate(selected, texts, onFinished = onClose)
-                },
+                onClick = { vm.generate(selected, texts, onFinished = onClose) },
                 enabled = !vm.generating && texts.all(::isParamText),
             ) { Text("Generate") }
         },
