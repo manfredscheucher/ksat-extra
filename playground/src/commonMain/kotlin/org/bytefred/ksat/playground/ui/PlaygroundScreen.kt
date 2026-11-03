@@ -266,8 +266,8 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
                         Column(Modifier.padding(start = 40.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             val chosen = presets.getValue(example)
                             for (row in example.presets) {
-                                FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                    for (p in row) SmallRadio(p.label, chosen.value == p) { chosen.value = p }
+                                FlowRow {
+                                    for (p in row) SmallRadio(p.label, chosen.value == p, Modifier.width(140.dp)) { chosen.value = p }
                                 }
                             }
                             if (example.presets.isNotEmpty()) SmallRadio("custom", chosen.value == null) { chosen.value = null }
@@ -315,9 +315,9 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
 
 /** A radio button with [label], for the presets of an example. */
 @Composable
-private fun SmallRadio(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun SmallRadio(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Row(
-        Modifier.selectable(selected = selected, onClick = onClick, role = Role.RadioButton),
+        modifier.selectable(selected = selected, onClick = onClick, role = Role.RadioButton),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(selected = selected, onClick = null)
