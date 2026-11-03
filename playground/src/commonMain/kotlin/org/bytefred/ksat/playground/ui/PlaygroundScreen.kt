@@ -139,11 +139,13 @@ private fun Controls(
                 Text(mode.label, Modifier.padding(start = 4.dp, end = 8.dp))
             }
         }
-        Button(onClick = vm::solve, enabled = !vm.running) { Text("Solve") }
+        // one button: Solve, which becomes Stop while a computation runs
+        Button(onClick = { if (vm.running) vm.stop() else vm.solve() }, Modifier.width(96.dp)) {
+            Text(if (vm.running) "Stop" else "Solve")
+        }
         OutlinedButton(onClick = { vm.showSolutions = !vm.showSolutions }) {
             Text(if (vm.showSolutions) "Hide solutions" else "Show solutions")
         }
-        OutlinedButton(onClick = vm::stop, enabled = vm.running) { Text("Stop") }
     }
 }
 

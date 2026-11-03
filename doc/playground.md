@@ -279,3 +279,5 @@ Made while building (Claude):
   explicit labels instead of yes/no). Stop computation stops the run and then does the action. Not
   asked for: About, Show/Hide solutions, Stop (they do not change the run). The old confirm inside
   the Examples dialog (on Generate) is gone, since the dialog cannot open during a run anymore.
+- No separate Stop button (Manfred): the Solve button turns into Stop while a computation runs
+  (fixed width, so the row does not jump).
