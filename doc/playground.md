@@ -281,3 +281,12 @@ Made while building (Claude):
   the Examples dialog (on Generate) is gone, since the dialog cannot open during a run anymore.
 - No separate Stop button (Manfred): the Solve button turns into Stop while a computation runs
   (fixed width, so the row does not jump).
+
+## Menu bar and colours like ktoy / ksat-chess (Manfred, 2026-11-09)
+
+Asked: "kannst du das format auch bitte zu ../ksat-extra übertragen" (the ktoy look, which matches ksat-chess); answer to Claude's question: colours plus a menu bar.
+
+- A grey menu bar (#E6E8EB) across the full width at the top, ported from ksat-chess: File (Examples…, Load file…), Solver: <name> (the four solvers with ✓, then Options…), Help (About ksat playground). The app name sits on its right (on the web with the "running in your browser" line). It replaces the title row and the Examples / Load file / Solver / Options / About buttons.
+- Mode, Solve/Stop and Show solutions stay as the row of controls under the bar.
+- The teal colour scheme of ktoy and ksat-chess (primary #2F5D62, neutral white/grey surfaces).
+- jvmTest: Compose UI tests for the menu bar (`MenuBarTest`).

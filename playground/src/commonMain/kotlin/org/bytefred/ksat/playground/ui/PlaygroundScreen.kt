@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -25,8 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -64,7 +61,7 @@ import org.bytefred.ksat.playground.core.isParamText
 private val WIDE_LAYOUT = 840.dp
 
 /**
- * The playground: a header, one row of controls (wrapping on narrow screens), then the DIMACS
+ * The playground: the menu bar, one row of controls (wrapping on narrow screens), then the DIMACS
  * editor and the output.
  */
 @Composable
@@ -82,28 +79,27 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
         )
     }
 
-    Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("ksat playground", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            if (isWeb) Text("SAT solvers ported to Kotlin, running in your browser", Modifier.weight(1f, fill = false), style = MaterialTheme.typography.bodyMedium)
-        }
-        Controls(
+    Column(Modifier.fillMaxSize()) {
+        PlaygroundMenuBar(
             vm,
             onExamples = { vm.whenStopped { showExamples = true } },
             onLoadFile = { vm.whenStopped(loadFile) },
             onOptions = { vm.whenStopped { showOptions = true } },
             onAbout = { showAbout = true },
         )
-        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-            if (maxWidth >= WIDE_LAYOUT) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Editor(vm, Modifier.weight(1f).fillMaxSize())
-                    Output(vm, Modifier.weight(1f).fillMaxSize())
-                }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Editor(vm, Modifier.weight(1f).fillMaxWidth())
-                    Output(vm, Modifier.weight(1f).fillMaxWidth())
+        Column(Modifier.weight(1f).padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Controls(vm)
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+                if (maxWidth >= WIDE_LAYOUT) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Editor(vm, Modifier.weight(1f).fillMaxSize())
+                        Output(vm, Modifier.weight(1f).fillMaxSize())
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Editor(vm, Modifier.weight(1f).fillMaxWidth())
+                        Output(vm, Modifier.weight(1f).fillMaxWidth())
+                    }
                 }
             }
         }
@@ -115,20 +111,7 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
 }
 
 @Composable
-private fun Controls(
-    vm: PlaygroundViewModel,
-    onExamples: () -> Unit,
-    onLoadFile: () -> Unit,
-    onOptions: () -> Unit,
-    onAbout: () -> Unit,
-) {
-    ControlRow {
-        OutlinedButton(onClick = onExamples) { Text("Examples") }
-        OutlinedButton(onClick = onLoadFile) { Text("Load file") }
-        SolverDropdown(vm.solver, onOpen = vm::whenStopped, onPick = { vm.solver = it })
-        OutlinedButton(onClick = onOptions) { Text("Options") }
-        OutlinedButton(onClick = onAbout) { Text("About") }
-    }
+private fun Controls(vm: PlaygroundViewModel) {
     ControlRow {
         for (mode in Mode.entries) {
             Row(
@@ -157,25 +140,6 @@ private fun ControlRow(content: @Composable () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(4.dp),
         itemVerticalAlignment = Alignment.CenterVertically,
     ) { content() }
-}
-
-@Composable
-private fun SolverDropdown(selected: Solver, onOpen: (() -> Unit) -> Unit, onPick: (Solver) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        OutlinedButton(onClick = { onOpen { expanded = true } }) { Text("Solver: ${selected.name}") }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            for (solver in Solver.entries) {
-                DropdownMenuItem(
-                    text = { Text(solver.name) },
-                    onClick = {
-                        onPick(solver)
-                        expanded = false
-                    },
-                )
-            }
-        }
-    }
 }
 
 @Composable
