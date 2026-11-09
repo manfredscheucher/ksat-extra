@@ -7,7 +7,11 @@ import org.bytefred.ksat.playground.core.GenerateResult
 import org.bytefred.ksat.playground.core.SolveEvent
 import org.bytefred.ksat.playground.core.SolveRequest
 import org.bytefred.ksat.playground.core.nowMillis
+import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.url.URL
+import org.w3c.files.Blob
+import org.w3c.files.BlobPropertyBag
 import org.w3c.dom.Worker
 import org.w3c.files.FileReader
 import org.w3c.files.get
@@ -127,6 +131,22 @@ actual fun rememberFileLoader(onLoaded: (text: String) -> Unit, onFailed: (messa
         }
     }
     input.click()
+}
+
+// Browser: save as a Blob download (the browser decides where it goes).
+@Composable
+actual fun rememberFileSaver(
+    onSaved: (fileName: String?) -> Unit,
+    onFailed: (message: String) -> Unit,
+): (fileName: String, text: String) -> Unit = { fileName, text ->
+    val body = if (text.endsWith("\n")) text else text + "\n"
+    val url = URL.createObjectURL(Blob(arrayOf(body), BlobPropertyBag(type = "text/plain")))
+    val a = document.createElement("a") as HTMLAnchorElement
+    a.href = url
+    a.download = fileName
+    a.click()
+    URL.revokeObjectURL(url)
+    onSaved(fileName)
 }
 
 actual val isWeb: Boolean = true

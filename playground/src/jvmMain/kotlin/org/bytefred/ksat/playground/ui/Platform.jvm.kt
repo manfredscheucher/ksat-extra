@@ -3,6 +3,7 @@ package org.bytefred.ksat.playground.ui
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
+import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 
@@ -33,6 +34,31 @@ actual fun rememberFileLoader(onLoaded: (text: String) -> Unit, onFailed: (messa
             null.also { onFailed("cannot read ${f.name}: ${e.message ?: e.toString()}") }
         }
         if (text != null) onLoaded(text)
+    }
+}
+
+@Composable
+actual fun rememberFileSaver(
+    onSaved: (fileName: String?) -> Unit,
+    onFailed: (message: String) -> Unit,
+): (fileName: String, text: String) -> Unit = { fileName, text ->
+    val chooser = JFileChooser().apply {
+        dialogTitle = "Save CNF"
+        selectedFile = File(fileName)
+        fileFilter = FileNameExtensionFilter("DIMACS CNF (*.cnf)", "cnf")
+    }
+    if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+        var f = chooser.selectedFile
+        if (!f.name.lowercase().endsWith(".cnf")) f = File(f.path + ".cnf")
+        try {
+            f.writeText(if (text.endsWith("\n")) text else text + "\n")
+            onSaved(f.name)
+        } catch (e: Exception) {
+            onFailed("cannot write ${f.name}: ${e.message ?: e.toString()}")
+            onSaved(null)
+        }
+    } else {
+        onSaved(null)
     }
 }
 

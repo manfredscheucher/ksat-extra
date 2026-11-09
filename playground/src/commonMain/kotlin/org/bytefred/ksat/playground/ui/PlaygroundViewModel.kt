@@ -36,6 +36,15 @@ class PlaygroundViewModel(
     private val now: () -> Long = ::nowMillis,
 ) : ViewModel() {
     var dimacs by mutableStateOf(STARTER_EXAMPLE)
+
+    /** The CNF as last loaded, generated or saved: an edit since then is not saved yet. */
+    private var savedDimacs by mutableStateOf(STARTER_EXAMPLE)
+
+    /** The CNF has edits that are not in a file (Load file / Examples ask first, [leave]). */
+    val unsavedEdits: Boolean get() = dimacs != savedDimacs
+
+    /** The shares of the editor and the output in the side-by-side layout (draggable divider). */
+    var splitWeights by mutableStateOf(mapOf<String, Float>())
     var solver by mutableStateOf(Solver.MINISAT)
     var mode by mutableStateOf(Mode.ONE)
 
@@ -95,6 +104,45 @@ class PlaygroundViewModel(
 
     fun cancelPending() {
         pendingAction = null
+    }
+
+    /** An action waiting for "Save changes?" ([leave]). */
+    var pendingLeave by mutableStateOf<(() -> Unit)?>(null)
+        private set
+
+    /** Run [action] (which replaces the CNF), asking first if the CNF has unsaved edits. */
+    fun leave(action: () -> Unit) {
+        if (unsavedEdits) pendingLeave = action else action()
+    }
+
+    fun discardAndLeave() {
+        val action = pendingLeave
+        pendingLeave = null
+        action?.invoke()
+    }
+
+    fun cancelLeave() {
+        pendingLeave = null
+    }
+
+    /** A loaded file replaces the CNF. */
+    fun loadDimacs(text: String) {
+        dimacs = text
+        savedDimacs = text
+    }
+
+    /**
+     * Saving [text] finished: [fileName] is null if it was cancelled or failed, which also cancels a
+     * pending leave; else it is logged and the pending leave goes on.
+     */
+    fun fileSaved(fileName: String?, text: String) {
+        if (fileName == null) {
+            cancelLeave()
+            return
+        }
+        savedDimacs = text
+        log += LogLine(now(), "saved $fileName")
+        discardAndLeave()
     }
 
     private var runId = 0
@@ -180,7 +228,7 @@ class PlaygroundViewModel(
                 when (result) {
                     is GenerateResult.Generated -> {
                         log.clear()
-                        dimacs = result.dimacs
+                        loadDimacs(result.dimacs)
                     }
                     is GenerateResult.Failed -> logError("cannot generate the example: ${result.message}")
                 }

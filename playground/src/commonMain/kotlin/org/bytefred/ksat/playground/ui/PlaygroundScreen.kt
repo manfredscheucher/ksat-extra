@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +25,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -41,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -50,6 +53,7 @@ import org.bytefred.ksat.facade.Solver
 import org.bytefred.ksat.facade.SolverOption
 import org.bytefred.ksat.facade.solverOptions
 import org.bytefred.ksat.playground.GeneratedBuildInfo
+import org.bytefred.ksat.playground.GeneratedLicenses
 import org.bytefred.ksat.playground.core.Example
 import org.bytefred.ksat.playground.core.Mode
 import org.bytefred.ksat.playground.core.formatOptionValue
@@ -69,7 +73,15 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
     var showExamples by remember { mutableStateOf(false) }
     var showOptions by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
-    val loadFile = rememberFileLoader(onLoaded = { vm.dimacs = it }, onFailed = vm::logError)
+    var help by remember { mutableStateOf<HelpPage?>(null) }
+    val loadFile = rememberFileLoader(onLoaded = vm::loadDimacs, onFailed = vm::logError)
+    // the text being saved: the save finishes later (a file dialog), and only that text is then saved
+    var savingText by remember { mutableStateOf("") }
+    val saveToFile = rememberFileSaver(onSaved = { vm.fileSaved(it, savingText) }, onFailed = vm::logError)
+    fun save() {
+        savingText = vm.dimacs
+        saveToFile(SAVE_FILE_NAME, savingText)
+    }
     vm.pendingAction?.let {
         AlertDialog(
             onDismissRequest = vm::cancelPending,
@@ -83,18 +95,27 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
         PlaygroundMenuBar(
             vm,
             onExamples = { vm.whenStopped { showExamples = true } },
-            onLoadFile = { vm.whenStopped(loadFile) },
+            onLoadFile = { vm.whenStopped { vm.leave(loadFile) } },
+            onSave = ::save,
             onOptions = { vm.whenStopped { showOptions = true } },
+            onHelp = { help = it },
             onAbout = { showAbout = true },
         )
         Column(Modifier.weight(1f).padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Controls(vm)
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                 if (maxWidth >= WIDE_LAYOUT) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Editor(vm, Modifier.weight(1f).fillMaxSize())
-                        Output(vm, Modifier.weight(1f).fillMaxSize())
-                    }
+                    // a draggable divider between the two (ported from ktoy)
+                    SplitPane(
+                        listOf(
+                            SplitPanel("editor") { Editor(vm, it.fillMaxSize()) },
+                            SplitPanel("output") { Output(vm, it.fillMaxSize()) },
+                        ),
+                        vm.splitWeights,
+                        { vm.splitWeights = it },
+                        horizontal = true,
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Editor(vm, Modifier.weight(1f).fillMaxWidth())
@@ -107,7 +128,32 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
 
     if (showExamples) ExamplesDialog(vm, onClose = { showExamples = false })
     if (showOptions) OptionsDialog(vm, onClose = { showOptions = false })
+    help?.let { HelpDialog(it) { help = null } }
     if (showAbout) AboutDialog(onLinkFailed = vm::logError, onClose = { showAbout = false })
+    // last, so it sits on top of the Examples dialog that asked for it
+    if (vm.pendingLeave != null) {
+        UnsavedEditsDialog(onSave = ::save, onDiscard = vm::discardAndLeave, onCancel = vm::cancelLeave)
+    }
+}
+
+/** The suggested name for File → Save…. */
+private const val SAVE_FILE_NAME = "formula.cnf"
+
+/** "Save changes?" before Load file or an example replaces a CNF with unsaved edits (as in ksat-chess). */
+@Composable
+private fun UnsavedEditsDialog(onSave: () -> Unit, onDiscard: () -> Unit, onCancel: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("Save changes?") },
+        text = { Text("The CNF has changes that are not saved to a file yet.") },
+        confirmButton = { TextButton(onClick = onSave) { Text("Save…") } },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onDiscard) { Text("Discard") }
+                TextButton(onClick = onCancel) { Text("Cancel") }
+            }
+        },
+    )
 }
 
 @Composable
@@ -142,15 +188,23 @@ private fun ControlRow(content: @Composable () -> Unit) {
     ) { content() }
 }
 
+/** The DIMACS editor: grows with its text inside a scrolling box with a scrollbar. */
 @Composable
 private fun Editor(vm: PlaygroundViewModel, modifier: Modifier) {
-    OutlinedTextField(
-        value = vm.dimacs,
-        onValueChange = { text -> vm.whenStopped { vm.dimacs = text } },
-        modifier = modifier,
-        label = { Text("DIMACS CNF") },
-        textStyle = LocalMonoStyle.current,
-    )
+    val vScroll = rememberScrollState()
+    BoxWithConstraints(modifier) {
+        val minHeight = maxHeight
+        ScrollbarBox(vScroll, Modifier.fillMaxSize()) {
+            OutlinedTextField(
+                value = vm.dimacs,
+                onValueChange = { text -> vm.whenStopped { vm.dimacs = text } },
+                modifier = Modifier.verticalScroll(vScroll).fillMaxWidth().heightIn(min = minHeight)
+                    .padding(end = 8.dp).testTag("editor"),
+                label = { Text("DIMACS CNF") },
+                textStyle = LocalMonoStyle.current,
+            )
+        }
+    }
 }
 
 /** The output of the latest run: one time-stamped line per event, solutions shown on the toggle. */
@@ -165,16 +219,18 @@ private fun Output(vm: PlaygroundViewModel, modifier: Modifier) {
     Column(modifier.padding(top = 8.dp).background(OUTPUT_BACKGROUND, RoundedCornerShape(4.dp)).padding(8.dp)) {
         Text("Output", style = mono.copy(color = OUTPUT_DIM))
         Spacer(Modifier.height(4.dp))
-        LazyColumn(Modifier.fillMaxSize(), state = listState) {
-            items(vm.log) { line ->
-                // time stamp and message side by side, so a wrapped message stays indented
-                Row(Modifier.fillMaxWidth()) {
-                    Text(formatTimestamp(line.timeMillis) + "  ", style = mono.copy(color = OUTPUT_DIM))
-                    Column(Modifier.weight(1f)) {
-                        Text(line.text, style = mono)
-                        val solution = line.solution
-                        if (solution != null && vm.showSolutions) {
-                            Text(formatSolution(solution), style = mono.copy(color = OUTPUT_SOLUTION))
+        ScrollbarBox(listState, Modifier.fillMaxSize(), thumbColor = OUTPUT_THUMB) {
+            LazyColumn(Modifier.fillMaxSize().padding(end = 8.dp).testTag("output"), state = listState) {
+                items(vm.log) { line ->
+                    // time stamp and message side by side, so a wrapped message stays indented
+                    Row(Modifier.fillMaxWidth()) {
+                        Text(formatTimestamp(line.timeMillis) + "  ", style = mono.copy(color = OUTPUT_DIM))
+                        Column(Modifier.weight(1f)) {
+                            Text(line.text, style = mono)
+                            val solution = line.solution
+                            if (solution != null && vm.showSolutions) {
+                                Text(formatSolution(solution), style = mono.copy(color = OUTPUT_SOLUTION))
+                            }
                         }
                     }
                 }
@@ -187,6 +243,7 @@ private val OUTPUT_BACKGROUND = Color(0xFF1E1E1E)
 private val OUTPUT_TEXT = Color(0xFFD4D4D4)
 private val OUTPUT_DIM = Color(0xFF8A8A8A)
 private val OUTPUT_SOLUTION = Color(0xFF9CDCFE)
+private val OUTPUT_THUMB = Color(0x66FFFFFF)
 
 /**
  * One radio button per [Example]; the selected one shows its parameter fields and description.
@@ -196,14 +253,25 @@ private val OUTPUT_SOLUTION = Color(0xFF9CDCFE)
 private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
     val selected = vm.selectedExample
     val texts = vm.selectedTexts
-    AlertDialog(
-        onDismissRequest = {
-            vm.cancelGeneration()
-            onClose()
+    fun cancel() {
+        vm.cancelGeneration()
+        onClose()
+    }
+    BigDialog(
+        "Examples",
+        onDismiss = ::cancel,
+        buttons = {
+            TextButton(onClick = ::cancel) { Text("Cancel") }
+            // replaces the CNF: asks first if it has unsaved edits
+            TextButton(
+                onClick = { vm.leave { vm.generate(selected, texts, onFinished = onClose) } },
+                enabled = !vm.generating && texts.all(::isParamText),
+            ) { Text("Generate") }
         },
-        title = { Text("Examples") },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    ) {
+        val vScroll = rememberScrollState()
+        ScrollbarBox(vScroll, Modifier.weight(1f).fillMaxWidth()) {
+            Column(Modifier.verticalScroll(vScroll).padding(end = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 for (example in Example.entries) {
                     Row(
                         Modifier.fillMaxWidth()
@@ -245,20 +313,8 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
                 }
                 if (vm.generating) Text("generating ...")
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { vm.generate(selected, texts, onFinished = onClose) },
-                enabled = !vm.generating && texts.all(::isParamText),
-            ) { Text("Generate") }
-        },
-        dismissButton = {
-            TextButton(onClick = {
-                vm.cancelGeneration()
-                onClose()
-            }) { Text("Cancel") }
-        },
-    )
+        }
+    }
 }
 
 /** A radio button with [label], for the presets of an example. */
@@ -282,23 +338,25 @@ private fun SmallRadio(label: String, selected: Boolean, modifier: Modifier = Mo
 private fun OptionsDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
     val solver = vm.solver
     val options = remember(solver) { solverOptions(solver) }
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text("${solver.name} options") },
-        text = {
-            if (options.isEmpty()) {
-                Text("${solver.name} has no options.")
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    BigDialog(
+        "${solver.name} options",
+        onDismiss = onClose,
+        buttons = {
+            if (options.isNotEmpty()) TextButton(onClick = { vm.resetOptions(solver) }) { Text("Reset to defaults") }
+            TextButton(onClick = onClose) { Text("Close") }
+        },
+    ) {
+        if (options.isEmpty()) {
+            Text("${solver.name} has no options.")
+        } else {
+            val listState = rememberLazyListState()
+            ScrollbarBox(listState, Modifier.weight(1f).fillMaxWidth()) {
+                LazyColumn(Modifier.padding(end = 12.dp), state = listState, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(options, key = { it.name }) { option -> OptionRow(vm, solver, option) }
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text("Close") } },
-        dismissButton = {
-            if (options.isNotEmpty()) TextButton(onClick = { vm.resetOptions(solver) }) { Text("Reset to defaults") }
-        },
-    )
+        }
+    }
 }
 
 @Composable
@@ -330,14 +388,13 @@ private fun OptionRow(vm: PlaygroundViewModel, solver: Solver, option: SolverOpt
     }
 }
 
-/** About: build identity, the two repos, license. Modeled on ktoy's About. */
+/** About: build identity, the two repos, license texts (as in ksat-chess). Modeled on ktoy's About. */
 @Composable
 private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text("ksat playground") },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+    BigDialog("ksat playground", onDismiss = onClose, buttons = { TextButton(onClick = onClose) { Text("OK") } }) {
+        val vScroll = rememberScrollState()
+        ScrollbarBox(vScroll, Modifier.weight(1f).fillMaxWidth()) {
+            Column(Modifier.verticalScroll(vScroll).padding(end = 12.dp).testTag("about")) {
                 Text("Kotlin Multiplatform ports of state-of-the-art SAT solvers (MiniSat, CaDiCaL, kissat, MicroSAT). Runs on JVM, Android, iOS, native and in the browser.")
                 Spacer(Modifier.height(8.dp))
                 FeedbackBox("ksat is in early development. Feedback is very welcome:", onLinkFailed)
@@ -357,10 +414,20 @@ private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                var showLicenses by remember { mutableStateOf(false) }
+                TextButton(onClick = { showLicenses = !showLicenses }) {
+                    Text(if (showLicenses) "Hide license texts" else "License texts")
+                }
+                if (showLicenses) {
+                    for (notice in GeneratedLicenses.NOTICES) {
+                        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                        Text(notice.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                        Text(notice.text, style = LocalMonoStyle.current.copy(fontSize = MaterialTheme.typography.labelSmall.fontSize))
+                    }
+                }
             }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text("OK") } },
-    )
+        }
+    }
 }
 
 /** One About line: "[name] (MIT): note", only the name is a link. */

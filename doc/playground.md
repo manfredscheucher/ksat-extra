@@ -290,3 +290,16 @@ Asked: "kannst du das format auch bitte zu ../ksat-extra übertragen" (the ktoy 
 - Mode, Solve/Stop and Show solutions stay as the row of controls under the bar.
 - The teal colour scheme of ktoy and ksat-chess (primary #2F5D62, neutral white/grey surfaces).
 - jvmTest: Compose UI tests for the menu bar (`MenuBarTest`).
+
+## Scrollbars, divider, Save, big dialogs, Help, license texts (Manfred, 2026-11-09)
+
+Claude compared the three GUIs (ktoy, ksat-chess, this playground) and listed what could move between them; Manfred's answer to the list: "alles". The playground parts:
+
+- Scrollbars (ported from ktoy's `ScrollbarBox`) on the DIMACS editor and the output (a lazy-list variant: the thumb follows the item counts). The editor grows with its text inside a scrolling box, so typing at the end scrolls it along.
+- A draggable divider between editor and output in the side-by-side layout (ktoy's `SplitPane`); the stacked phone layout stays as it was. The shares are kept in the view model for the session.
+- File → Save… writes the editor's text (suggested name `formula.cnf`): a save dialog on desktop and Android, a download in the browser. A saved file is logged as `saved <name>`, a write error as `error: …`.
+- "Save changes?" (Save… / Discard / Cancel, as in ksat-chess) before Load file or Generate in the Examples dialog replaces a CNF that was edited since it was loaded, generated or saved. The starter example counts as unedited. Asked at Generate, not when the Examples dialog opens, so browsing the examples never asks. It works together with the existing "A computation is still running" question, which comes first.
+- Examples, Options, About and Help are big dialogs (ktoy's `BigDialog`: the window minus 16 dp).
+- Help menu: "General" and "DIMACS format" (plain paragraphs, monospace only for the DIMACS sample), then "About ksat playground". Every claim is checked against the code (`DimacsCnf.parse`: header optional, counts not checked, a clause may span lines).
+- About: a "License texts" toggle (as in ksat-chess), generated at build time from the license files: ksat-extra, ksat, MicroSAT, MiniSat, CaDiCaL, kissat and the bundled DejaVu Sans Mono font.
+- Not done: the arrow keys do not scroll the editor's box along with the cursor (typing does).

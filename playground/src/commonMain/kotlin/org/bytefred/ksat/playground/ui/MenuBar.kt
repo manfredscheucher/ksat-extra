@@ -45,15 +45,17 @@ import kotlin.time.TimeSource
 import org.bytefred.ksat.facade.Solver
 
 /**
- * The menu bar across the top (as in ktoy and ksat-chess): File (examples, load), Solver (which
- * solver, its options), Help (about), and the app name on the right.
+ * The menu bar across the top (as in ktoy and ksat-chess): File (examples, load, save), Solver
+ * (which solver, its options), Help (help pages, about), and the app name on the right.
  */
 @Composable
 fun PlaygroundMenuBar(
     vm: PlaygroundViewModel,
     onExamples: () -> Unit,
     onLoadFile: () -> Unit,
+    onSave: () -> Unit,
     onOptions: () -> Unit,
+    onHelp: (HelpPage) -> Unit,
     onAbout: () -> Unit,
 ) {
     var openMenu by remember { mutableStateOf<String?>(null) }
@@ -88,6 +90,7 @@ fun PlaygroundMenuBar(
             MenuButton("File", openMenu, { openMenu = it }) {
                 Item("Examples…", onExamples)
                 Item("Load file…", onLoadFile)
+                Item("Save…", onSave)
             }
             MenuButton("Solver", openMenu, { openMenu = it }, title = "Solver: ${vm.solver.name}") {
                 for (solver in Solver.entries) {
@@ -100,6 +103,7 @@ fun PlaygroundMenuBar(
                 Item("Options…", onOptions)
             }
             MenuButton("Help", openMenu, { openMenu = it }) {
+                for (page in HelpPage.entries) Item(page.title) { onHelp(page) }
                 Item("About ksat playground", onAbout)
             }
         }
