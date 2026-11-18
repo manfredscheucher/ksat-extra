@@ -291,15 +291,19 @@ private fun ExamplesDialog(vm: PlaygroundViewModel, onClose: () -> Unit) {
                             }
                             if (example.presets.isNotEmpty()) SmallRadio("custom", chosen.value == null) { chosen.value = null }
                             if (chosen.value == null) for ((param, value) in example.params.zip(vm.exampleTexts.getValue(example))) {
-                                OutlinedTextField(
-                                    value = value.value,
-                                    onValueChange = { value.value = it },
-                                    modifier = Modifier.width(240.dp),
-                                    label = { Text("${param.name} (${param.meaning})") },
-                                    singleLine = true,
-                                    isError = !isParamText(value.value),
-                                    enabled = !vm.generating,
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("${param.name} (${param.meaning}):", Modifier.padding(end = 4.dp))
+                                    // any non-negative Int: at most 10 digits
+                                    NumberField(
+                                        value = value.value,
+                                        onValueChange = { value.value = it },
+                                        chars = Int.MAX_VALUE.toString().length,
+                                        tag = "param-${param.name}",
+                                        isError = !isParamText(value.value),
+                                        enabled = !vm.generating,
+                                        steps = 0..Int.MAX_VALUE,
+                                    )
+                                }
                             }
                             val ints = texts.mapNotNull { if (isParamText(it)) it.trim().toIntOrNull() else null }
                             if (ints.size == texts.size) {
@@ -371,13 +375,12 @@ private fun OptionRow(vm: PlaygroundViewModel, solver: Solver, option: SolverOpt
                     onCheckedChange = { vm.setOptionText(solver, option.name, if (it) "1" else "0") },
                 )
             } else {
-                OutlinedTextField(
+                NumberField(
                     value = text,
                     onValueChange = { vm.setOptionText(solver, option.name, it) },
-                    modifier = Modifier.width(160.dp),
-                    singleLine = true,
+                    chars = optionChars(option),
+                    tag = "option-${option.name}",
                     isError = parseOptionValue(text) == null,
-                    textStyle = LocalMonoStyle.current,
                 )
             }
         }
@@ -387,6 +390,15 @@ private fun OptionRow(vm: PlaygroundViewModel, solver: Solver, option: SolverOpt
         )
     }
 }
+
+/**
+ * Width of an option's field in characters: an INT option's longest bound (e.g. 10 digits up to
+ * Int.MAX_VALUE, a sign for negative bounds); a DOUBLE option 10 characters (a decimal like 0.999
+ * or 91648253.0; its bounds can be huge).
+ */
+internal fun optionChars(option: SolverOption): Int =
+    if (option.type == OptionType.INT) maxOf(formatOptionValue(option.min).length, formatOptionValue(option.max).length)
+    else 10
 
 /** About: build identity, the two repos, license texts (as in ksat-chess). Modeled on ktoy's About. */
 @Composable

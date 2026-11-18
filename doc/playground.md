@@ -303,3 +303,16 @@ Claude compared the three GUIs (ktoy, ksat-chess, this playground) and listed wh
 - Help menu: "General" and "DIMACS format" (plain paragraphs, monospace only for the DIMACS sample), then "About ksat playground". Every claim is checked against the code (`DimacsCnf.parse`: header optional, counts not checked, a clause may span lines).
 - About: a "License texts" toggle (as in ksat-chess), generated at build time from the license files: ksat-extra, ksat, MicroSAT, MiniSat, CaDiCaL, kissat and the bundled DejaVu Sans Mono font.
 - Not done: the arrow keys do not scroll the editor's box along with the cursor (typing does).
+
+## Compact number fields (Manfred, 2026-11-18)
+
+Manfred: integer inputs are huge (Material's text field is at least 280 dp wide and 56 dp high),
+make them reasonable everywhere. The example parameters (Examples dialog, "custom") and the INT /
+DOUBLE solver options are now one shared `NumberField` modelled on ktoy's steps/sec field: a low
+field with a 1 dp grey border, as high as the buttons, mono text, as wide as the longest allowed
+value (10 digits for a parameter, any non-negative Int; an INT option's longest bound; 10
+characters for a DOUBLE option). The parameter label moved in front of the field ("n (number of
+holes):"). Red border and validation are unchanged (parameter: `isParamText`, option: a number).
+
+"−"/"+" (step 1, within 0..Int.MAX_VALUE) only on the example parameters (sizes like n). Not on the
+solver options: mixed INT / DOUBLE with no natural step, and the list is long.
