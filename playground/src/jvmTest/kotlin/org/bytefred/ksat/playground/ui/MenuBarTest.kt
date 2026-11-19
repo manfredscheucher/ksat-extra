@@ -15,8 +15,8 @@ class MenuBarTest {
     @Test
     fun theMenuBarSpansTheTop() = runDesktopComposeUiTest(1000, 600) {
         setContent { App() }
-        val file = onNodeWithTag("menu-File").fetchSemanticsNode().boundsInRoot
-        assertTrue(file.top < 20f, "menu at the top: $file")
+        val cnf = onNodeWithTag("menu-CNF").fetchSemanticsNode().boundsInRoot
+        assertTrue(cnf.top < 20f, "menu at the top: $cnf")
         onNodeWithText("ksat playground", substring = true).assertExists()
     }
 
@@ -36,7 +36,7 @@ class MenuBarTest {
     @Test
     fun fileOpensTheExamplesAndHelpTheAbout() = runDesktopComposeUiTest(1000, 600) {
         setContent { PlaygroundScreen(PlaygroundViewModel()) }
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-CNF").performClick()
         waitForIdle()
         onNodeWithText("Examples…").performClick()
         waitForIdle()

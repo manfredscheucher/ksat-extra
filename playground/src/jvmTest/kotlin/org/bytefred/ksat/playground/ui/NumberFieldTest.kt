@@ -34,7 +34,7 @@ class NumberFieldTest {
         val vm = PlaygroundViewModel()
         vm.selectedExample = Example.PIGEONHOLE
         setContent { PlaygroundScreen(vm) }
-        open("File", "Examples…")
+        open("CNF", "Examples…")
         onNodeWithText("custom").performScrollTo().performClick()
         val field = onNodeWithTag("param-n").performScrollTo()
         // as high as a button, 10 digits wide (Material's text field is 280 x 56 dp)

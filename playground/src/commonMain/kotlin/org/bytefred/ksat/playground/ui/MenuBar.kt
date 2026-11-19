@@ -87,7 +87,7 @@ fun PlaygroundMenuBar(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MenuButton("File", openMenu, { openMenu = it }) {
+            MenuButton("CNF", openMenu, { openMenu = it }) {
                 Item("Examples…", onExamples)
                 Item("Load file…", onLoadFile)
                 Item("Save…", onSave)

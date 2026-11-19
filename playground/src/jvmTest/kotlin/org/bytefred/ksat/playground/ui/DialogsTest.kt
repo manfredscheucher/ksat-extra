@@ -38,7 +38,7 @@ class DialogsTest {
         val vm = PlaygroundViewModel()
         setContent { PlaygroundScreen(vm) }
         for ((title, item, close) in listOf(
-            Triple("File", "Examples…", "Cancel"),
+            Triple("CNF", "Examples…", "Cancel"),
             Triple("Solver", "Options…", "Close"),
             Triple("Help", "General", "OK"),
             Triple("Help", "DIMACS format", "OK"),
@@ -95,7 +95,7 @@ class DialogsTest {
     @Test
     fun fileHasSave() = runDesktopComposeUiTest(1000, 600) {
         setContent { PlaygroundScreen(PlaygroundViewModel()) }
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-CNF").performClick()
         waitForIdle()
         val tops = listOf("Examples…", "Load file…", "Save…").map { onNodeWithText(it).fetchSemanticsNode().boundsInRoot.top }
         assertEquals(tops.sorted(), tops)
@@ -106,7 +106,7 @@ class DialogsTest {
         val vm = PlaygroundViewModel()
         setContent { PlaygroundScreen(vm) }
         vm.dimacs = "p cnf 1 1\n1 0\n"
-        menu("File", "Examples…")
+        menu("CNF", "Examples…")
         onNodeWithText("Generate").performClick()
         waitForIdle()
         onNodeWithText("Save changes?").assertExists()

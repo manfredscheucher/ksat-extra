@@ -316,3 +316,11 @@ holes):"). Red border and validation are unchanged (parameter: `isParamText`, op
 
 "−"/"+" (step 1, within 0..Int.MAX_VALUE) only on the example parameters (sizes like n). Not on the
 solver options: mixed INT / DOUBLE with no natural step, and the list is long.
+
+## Menu "CNF" instead of "File" (Manfred, 2026-11-19)
+
+Manfred: in all the tools the first menu is often just "File"; find a better name (ArrView has
+"Arrangement", PoCoView "Point set"; for the SAT tools something like "Instance" or "CNF"). The
+menu holds Examples, Load file and Save, all of them acting on the CNF in the editor (the Help page
+says "The editor takes a CNF in the DIMACS format"), so it is now called "CNF" (test tag
+`menu-CNF`). Nothing else changed.
