@@ -323,4 +323,4 @@ Manfred: in all the tools the first menu is often just "File"; find a better nam
 "Arrangement", PoCoView "Point set"; for the SAT tools something like "Instance" or "CNF"). The
 menu holds Examples, Load file and Save, all of them acting on the CNF in the editor (the Help page
 says "The editor takes a CNF in the DIMACS format"), so it is now called "CNF" (test tag
-`menu-CNF`). Nothing else changed.
+`menu-CNF`); the Help text says "CNF →" too. Nothing else changed.

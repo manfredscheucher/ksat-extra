@@ -57,8 +57,8 @@ private fun Paragraph(text: String) {
 internal val GENERAL_TEXT = listOf(
     "The playground solves a formula in conjunctive normal form (CNF) with one of four SAT solvers " +
         "ported to Kotlin: MicroSAT, MiniSat, CaDiCaL and kissat.",
-    "Type or paste the formula into the editor. File → Examples… generates one, File → Load file… reads " +
-        "one from a file, and File → Save… writes the editor's text to a file. Before a load or an example " +
+    "Type or paste the formula into the editor. CNF → Examples… generates one, CNF → Load file… reads " +
+        "one from a file, and CNF → Save… writes the editor's text to a file. Before a load or an example " +
         "replaces edits that are not saved, the playground asks.",
     "The Solver menu picks the solver. Options… lists its options with their defaults; a changed value " +
         "applies to the following runs.",

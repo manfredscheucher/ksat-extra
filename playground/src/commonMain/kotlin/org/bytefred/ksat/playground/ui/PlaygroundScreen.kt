@@ -136,7 +136,7 @@ fun PlaygroundScreen(vm: PlaygroundViewModel) {
     }
 }
 
-/** The suggested name for File → Save…. */
+/** The suggested name for CNF → Save…. */
 private const val SAVE_FILE_NAME = "formula.cnf"
 
 /** "Save changes?" before Load file or an example replaces a CNF with unsaved edits (as in ksat-chess). */

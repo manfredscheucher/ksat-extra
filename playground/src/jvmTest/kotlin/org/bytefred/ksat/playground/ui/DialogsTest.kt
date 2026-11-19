@@ -18,7 +18,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** Big dialogs, Help, File → Save / "Save changes?", license texts, scrollbars and the divider. */
+/** Big dialogs, Help, CNF → Save / "Save changes?", license texts, scrollbars and the divider. */
 @OptIn(ExperimentalTestApi::class)
 class DialogsTest {
     private fun ComposeUiTest.menu(title: String, item: String) {
