@@ -442,7 +442,7 @@ private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
                     for (notice in GeneratedLicenses.NOTICES) {
                         HorizontalDivider(Modifier.padding(vertical = 8.dp))
                         Text(notice.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-                        Text(notice.text, style = LocalMonoStyle.current.copy(fontSize = MaterialTheme.typography.labelSmall.fontSize))
+                        Text(notice.text, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
