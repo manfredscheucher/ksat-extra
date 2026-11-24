@@ -4,10 +4,10 @@
 #
 # Builds the site (scripts/buildWeb.sh), copies it into a git worktree of the gh-pages
 # branch (.gh-pages/, created as an orphan branch on first use), and commits
-# it locally. Manfred then publishes it himself:
+# it locally as the branch's only commit. Manfred then publishes it himself:
 #
 #   ./scripts/deployPages.sh
-#   git push origin gh-pages
+#   git push --force origin gh-pages
 #
 # One-time setup on github.com: Settings -> Pages -> Deploy from a branch ->
 # gh-pages / (root). URL: https://manfredscheucher.github.io/ksat-extra/
@@ -40,6 +40,9 @@ git -C "$WT" add -A
 if git -C "$WT" diff --cached --quiet; then
     echo "No changes to deploy."
 else
+    # gh-pages keeps exactly one commit (Manfred): the new build replaces the old history
+    git -C "$WT" checkout -q --orphan gh-pages-new
     git -C "$WT" commit -q -m "deploy website ($SHA)"
-    echo "Committed to gh-pages. Publish with:  git push origin gh-pages"
+    git -C "$WT" branch -q -M gh-pages
+    echo "Committed to gh-pages (single commit). Publish with:  git push --force origin gh-pages"
 fi
