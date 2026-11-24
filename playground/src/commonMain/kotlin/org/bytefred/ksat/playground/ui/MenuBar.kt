@@ -96,7 +96,7 @@ fun PlaygroundMenuBar(
                 for (solver in Solver.entries) {
                     CheckItem(solver.name, vm.solver == solver) {
                         openMenu = null
-                        vm.whenStopped { vm.solver = solver }
+                        vm.whenStopped { vm.chooseSolver(solver) }
                     }
                 }
                 HorizontalDivider()

@@ -15,6 +15,7 @@ import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
 import org.bytefred.ksat.facade.solverOptions
 import org.bytefred.ksat.playground.core.Example
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -22,6 +23,9 @@ import kotlin.test.assertTrue
 /** The compact number fields of the Examples and Options dialogs (real clicks and typing). */
 @OptIn(ExperimentalTestApi::class)
 class NumberFieldTest {
+    @BeforeTest
+    fun resetPrefs() = resetPlaygroundPrefs()
+
     private fun ComposeUiTest.open(menu: String, item: String) {
         onNodeWithTag("menu-$menu").performClick()
         waitForIdle()

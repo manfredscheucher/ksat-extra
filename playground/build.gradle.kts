@@ -281,3 +281,8 @@ val generateLicenses = tasks.register<GenerateLicenses>("generateLicenses") {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
     dependsOn(generateBuildInfo, generateLicenses)
 }
+
+// JVM tests keep their preferences in memory (Prefs.jvm.kt), away from the real ones
+tasks.withType<Test>().configureEach {
+    systemProperty("ksat.playground.prefs", "memory")
+}

@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runDesktopComposeUiTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -12,6 +13,9 @@ import org.bytefred.ksat.facade.Solver
 
 @OptIn(ExperimentalTestApi::class)
 class MenuBarTest {
+    @BeforeTest
+    fun resetPrefs() = resetPlaygroundPrefs()
+
     @Test
     fun theMenuBarSpansTheTop() = runDesktopComposeUiTest(1000, 600) {
         setContent { App() }

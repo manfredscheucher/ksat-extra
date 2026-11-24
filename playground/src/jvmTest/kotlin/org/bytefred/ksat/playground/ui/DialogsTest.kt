@@ -14,6 +14,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.test.swipeRight
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -21,6 +22,9 @@ import kotlin.test.assertTrue
 /** Big dialogs, Help, CNF → Save / "Save changes?", license texts, scrollbars and the divider. */
 @OptIn(ExperimentalTestApi::class)
 class DialogsTest {
+    @BeforeTest
+    fun resetPrefs() = resetPlaygroundPrefs()
+
     private fun ComposeUiTest.menu(title: String, item: String) {
         onNodeWithTag("menu-$title").performClick()
         waitForIdle()

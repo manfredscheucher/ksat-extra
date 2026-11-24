@@ -161,7 +161,7 @@ private fun Controls(vm: PlaygroundViewModel) {
     ControlRow {
         for (mode in Mode.entries) {
             Row(
-                Modifier.selectable(selected = vm.mode == mode, onClick = { vm.whenStopped { vm.mode = mode } }, role = Role.RadioButton),
+                Modifier.selectable(selected = vm.mode == mode, onClick = { vm.whenStopped { vm.chooseMode(mode) } }, role = Role.RadioButton),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 RadioButton(selected = vm.mode == mode, onClick = null)
@@ -414,6 +414,14 @@ private fun AboutDialog(onLinkFailed: (String) -> Unit, onClose: () -> Unit) {
                 ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the solver ports", onLinkFailed)
                 ProjectLine("ksat-extra", "https://github.com/manfredscheucher/ksat-extra", "this playground, benchmarks and website", onLinkFailed)
                 Text("The original solvers are MIT-licensed too.", Modifier.padding(vertical = 2.dp))
+                if (isWeb) {
+                    Spacer(Modifier.height(8.dp))
+                    Text("Terms & privacy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text("Privacy", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 4.dp))
+                    for (p in WEB_PRIVACY) Text(p, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                    Text("Terms", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+                    for (p in WEB_TERMS) Text(p, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                }
                 Spacer(Modifier.height(8.dp))
                 val build = buildList {
                     val sha = GeneratedBuildInfo.COMMIT_SHA
@@ -487,3 +495,16 @@ private fun LinkText(label: String, url: String, onFailed: (String) -> Unit) {
         }.padding(vertical = 2.dp),
     )
 }
+
+/** Terms & privacy note of the website (web target only), text from misc/turingmachine/doc/privacy-github-pages.md. */
+private val WEB_PRIVACY = listOf(
+    "I don't collect anything. This site has no server of its own, no ads, no analytics and no trackers, and it sets no cookies. Your browser downloads the scripts, and then everything runs locally on your machine. Whatever you do on this site stays on your computer.",
+    "Your preferred settings are kept in your browser's local storage, so they're still there next time. They never leave your computer. Clearing your browser data removes them.",
+    "The app is built with Compose Multiplatform. Compose would like to fetch extra fonts from Google when you type characters its built-in fonts don't know (emoji, Chinese, ...). That's switched off here: everything this page loads comes from GitHub Pages, so such characters just show up as boxes.",
+    "The site is hosted on GitHub Pages. Like most web hosts, GitHub keeps server logs that include visitors' IP addresses, for security purposes; details are in GitHub's privacy statement (docs.github.com). I don't have access to these logs. You might also download the source and run it locally.",
+)
+
+private val WEB_TERMS = listOf(
+    "There is no guarantee of correctness or availability.",
+    "I'll do my best to keep this site running and to fix problems. If you experience problems or have general feedback or ideas, please let me know!",
+)

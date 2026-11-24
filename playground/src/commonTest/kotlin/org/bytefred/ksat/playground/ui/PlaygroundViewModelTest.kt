@@ -10,6 +10,7 @@ import org.bytefred.ksat.playground.core.Outcome
 import org.bytefred.ksat.playground.core.STARTER_EXAMPLE
 import org.bytefred.ksat.playground.core.SolveEvent
 import org.bytefred.ksat.playground.core.SolveRequest
+import org.bytefred.ksat.playground.core.formatOptionValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -53,13 +54,14 @@ class PlaygroundViewModelTest {
     private val service = FakeSolverService()
     private val generator = FakeGeneratorService()
     private var clock = 1_000L
+    init { resetPlaygroundPrefs() }
     private val vm = PlaygroundViewModel(service, generator, now = { clock })
 
     private fun texts() = vm.log.map { it.text }
 
     @Test
     fun oneSolutionRunEndsWithTerminatedAfter() {
-        vm.solver = Solver.CADICAL
+        vm.chooseSolver(Solver.CADICAL)
         vm.solve()
         assertTrue(vm.running)
         assertEquals(Solver.CADICAL, service.request!!.solver)
@@ -84,7 +86,7 @@ class PlaygroundViewModelTest {
 
     @Test
     fun allSolutionsRunEndsWithNoMoreSolutions() {
-        vm.mode = Mode.ALL
+        vm.chooseMode(Mode.ALL)
         vm.solve()
         service.emit(SolveEvent.Started(1_000L, 3, 4))
         for (i in 1..3) service.emit(SolveEvent.SolutionFound(1_000L, i, listOf(i)))
@@ -117,7 +119,7 @@ class PlaygroundViewModelTest {
 
     @Test
     fun stopCancelsAndDropsLaterEvents() {
-        vm.mode = Mode.ALL
+        vm.chooseMode(Mode.ALL)
         vm.solve()
         service.emit(SolveEvent.SolutionFound(1L, 1, listOf(1)))
         clock = 64_412L
@@ -240,7 +242,7 @@ class PlaygroundViewModelTest {
         assertTrue(vm.running)
         assertEquals(0, service.cancels)
 
-        vm.whenStopped { vm.mode = Mode.ALL }
+        vm.whenStopped { vm.chooseMode(Mode.ALL) }
         vm.confirmPending()
         assertFalse(vm.running)
         assertEquals(1, service.cancels)
@@ -285,5 +287,22 @@ class PlaygroundViewModelTest {
         result(GenerateResult.Generated("p cnf 2 0\n"))
         assertEquals(STARTER_EXAMPLE, vm.dimacs)
         assertEquals(0, finished)
+    }
+
+    @Test
+    fun solverModeAndOptionsAreKeptForTheNextSession() {
+        val option = solverOptions(Solver.CADICAL).first()
+        vm.chooseSolver(Solver.CADICAL)
+        vm.chooseMode(Mode.ALL)
+        vm.setOptionText(Solver.CADICAL, option.name, "7")
+
+        val next = PlaygroundViewModel(FakeSolverService(), FakeGeneratorService())
+        assertEquals(Solver.CADICAL, next.solver)
+        assertEquals(Mode.ALL, next.mode)
+        assertEquals("7", next.optionText(Solver.CADICAL, option))
+
+        vm.resetOptions(Solver.CADICAL)
+        val afterReset = PlaygroundViewModel(FakeSolverService(), FakeGeneratorService())
+        assertEquals(formatOptionValue(option.default), afterReset.optionText(Solver.CADICAL, option))
     }
 }

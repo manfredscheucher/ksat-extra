@@ -324,3 +324,19 @@ Manfred: in all the tools the first menu is often just "File"; find a better nam
 menu holds Examples, Load file and Save, all of them acting on the CNF in the editor (the Help page
 says "The editor takes a CNF in the DIMACS format"), so it is now called "CNF" (test tag
 `menu-CNF`); the Help text says "CNF →" too. Nothing else changed.
+
+## Web: no third-party requests
+
+Everything the web build loads comes from GitHub Pages (same origin); no CDNs, analytics or external fonts.
+Compose Multiplatform (1.12.1) has a built-in fallback-font downloader: when text contains glyphs the loaded
+fonts lack (typed/pasted emoji, CJK, ...), it fetches Noto fonts from `fonts.gstatic.com` (Google). Compose
+has no public switch to turn this off, so `index.html` sets
+`<meta http-equiv="Content-Security-Policy" content="connect-src 'self'">`: the browser refuses any
+background request to another server (silently, only a console message). Missing glyphs render as boxes.
+The About dialog states this on the web target.
+
+## Saved settings
+
+The solver, the mode (one / all solutions) and the edited solver options are kept across sessions
+(`Prefs.kt`: browser localStorage keys `ksatplayground.*`, Java Preferences on desktop, SharedPreferences
+on Android). The DIMACS text is not saved. JVM tests use an in-memory store (`-Dksat.playground.prefs=memory`).

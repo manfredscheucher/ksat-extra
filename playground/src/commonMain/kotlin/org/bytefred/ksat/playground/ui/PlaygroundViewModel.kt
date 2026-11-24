@@ -45,8 +45,23 @@ class PlaygroundViewModel(
 
     /** The shares of the editor and the output in the side-by-side layout (draggable divider). */
     var splitWeights by mutableStateOf(mapOf<String, Float>())
-    var solver by mutableStateOf(Solver.MINISAT)
-    var mode by mutableStateOf(Mode.ONE)
+    /** The chosen solver and mode, kept across sessions ([savePref]). */
+    var solver by mutableStateOf(
+        Solver.entries.firstOrNull { it.name == loadPref(SOLVER_PREF) } ?: Solver.MINISAT
+    )
+        private set
+    var mode by mutableStateOf(Mode.entries.firstOrNull { it.name == loadPref(MODE_PREF) } ?: Mode.ONE)
+        private set
+
+    fun chooseSolver(value: Solver) {
+        solver = value
+        savePref(SOLVER_PREF, value.name)
+    }
+
+    fun chooseMode(value: Mode) {
+        mode = value
+        savePref(MODE_PREF, value.name)
+    }
 
     val log = mutableStateListOf<LogLine>()
 
@@ -61,10 +76,18 @@ class PlaygroundViewModel(
         private set
 
     /**
-     * Option texts the user edited, per solver, for the session. Only values that differ from the
+     * Option texts the user edited, per solver, kept across sessions ([savePref]). Only values that differ from the
      * upstream default are passed to the solver ([changedOptions]).
      */
-    private val optionEdits = mutableStateMapOf<Solver, Map<String, String>>()
+    private val optionEdits = mutableStateMapOf<Solver, Map<String, String>>().apply {
+        for (solver in Solver.entries) {
+            val saved = loadPref(optionsPref(solver.name)) ?: continue
+            val edits = saved.lines().mapNotNull { line ->
+                line.indexOf('=').takeIf { it > 0 }?.let { line.substring(0, it) to line.substring(it + 1) }
+            }.toMap()
+            if (edits.isNotEmpty()) put(solver, edits)
+        }
+    }
 
     /**
      * The Examples dialog's choice, kept for the session so the dialog reopens where it was: the
@@ -182,10 +205,17 @@ class PlaygroundViewModel(
 
     fun setOptionText(solver: Solver, name: String, text: String) {
         optionEdits[solver] = (optionEdits[solver] ?: emptyMap()) + (name to text)
+        saveOptions(solver)
     }
 
     fun resetOptions(solver: Solver) {
         optionEdits.remove(solver)
+        saveOptions(solver)
+    }
+
+    private fun saveOptions(solver: Solver) {
+        val edits = optionEdits[solver] ?: emptyMap()
+        savePref(optionsPref(solver.name), edits.entries.joinToString("\n") { "${it.key}=${it.value}" })
     }
 
     /**
